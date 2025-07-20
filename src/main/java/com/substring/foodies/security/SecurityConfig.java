@@ -54,7 +54,9 @@ public class SecurityConfig {
 
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+//  This @Bean method is returning an AuthenticationManager object.
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception
+    {
         return configuration.getAuthenticationManager();
     }
 

@@ -30,7 +30,7 @@ public class JwtService {
         // This is basically done to identify if the token is refresh or access type.
         claims.put("typ", tokenType);
 
-        String accessToken = Jwts.builder()
+        String token = Jwts.builder()
                 .subject(username)
                 .claims(claims)
                 .issuedAt(new Date())
@@ -38,7 +38,7 @@ public class JwtService {
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes()), SignatureAlgorithm.HS256)
                 .compact();
 
-        return accessToken;
+        return token;
     }
 
 
