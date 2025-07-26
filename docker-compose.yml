@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+# This is a database service.
+  mysql_dbservice:
+    image: mysql:8.4
+    container_name: db-container
+    ports:
+      - "3307:3306"
+
+    environment:
+      MYSQL_DATABASE: lcwd
+      MYSQL_ROOT_PASSWORD: Restinpeace11.
+
+    volumes:
+#      All data stored in the path /var/lib/mysql will be safely stored in mysql-data volume.
+#      mysql-data is our computer folder and all the data from /var/lib/mysql path
+#      will be copied to that computer folder.
+      - mysql-data:/var/lib/mysql
+
+    networks:
+      - spring-boot-networks
+
+
+
+#  This is a springboot app service
+  spring-web-service:
+    image: rohanmujumdar1990/lcwd_substringfoodies
+    ports:
+      - "8081:8080"
+
+    container_name: substring-foodie-container
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql_dbservice:3306/lcwd
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: Restinpeace11.
+
+    networks:
+      - spring-boot-networks
+
+    depends_on:
+      - mysql_dbservice
+
+
+volumes:
+  mysql-data:
+
+networks:
+  spring-boot-networks:
+
+
