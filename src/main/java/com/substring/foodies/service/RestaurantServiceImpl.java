@@ -3,7 +3,9 @@ package com.substring.foodies.service;
 
 import com.substring.foodies.converter.Converter;
 import com.substring.foodies.dto.FileData;
+import com.substring.foodies.dto.OrderDto;
 import com.substring.foodies.dto.RestaurantDto;
+import com.substring.foodies.dto.enums.OrderStatus;
 import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.RestaurantRepository;
@@ -45,7 +47,7 @@ public class RestaurantServiceImpl implements RestaurantService{
     private String bannerFolderpath;
 
     @Override
-    public Restaurant savedRestaurant(RestaurantDto restaurantDto) {
+    public Restaurant addRestaurant(RestaurantDto restaurantDto) {
 
         // Setting the random ID for the restaurantDto
 // restaurantDto.setId(Helper.generateRandomId());
@@ -70,7 +72,7 @@ public class RestaurantServiceImpl implements RestaurantService{
         Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound());
 
         restaurant.setName(restaurantDto.getName());
-        restaurant.setAddress(restaurantDto.getAddress());
+//        restaurant.setAddress(restaurantDto.getAddress());
         restaurant.setOpenTime(restaurantDto.getOpenTime());
         restaurant.setCloseTime(restaurantDto.getCloseTime());
         restaurant.setOpen(restaurantDto.isOpen());
@@ -88,6 +90,12 @@ public class RestaurantServiceImpl implements RestaurantService{
         List<Restaurant> restaurantList = restaurantRepository.findByName(name);
         return converter.restoEntityToDto(restaurantList);
     }
+
+    @Override
+    public List<RestaurantDto> findRestaurantByIsActive(Boolean isActive) {
+        return List.of();
+    }
+
 
     @Override
     public RestaurantDto getRestaurantById(String id) {
@@ -147,6 +155,11 @@ public class RestaurantServiceImpl implements RestaurantService{
         }catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public List<RestaurantDto> getByOwner(String ownerId) {
+        return List.of();
     }
 
 }

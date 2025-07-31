@@ -1,6 +1,10 @@
 package com.substring.foodies.dto;
 
 
+import com.substring.foodies.dto.enums.Role;
+import com.substring.foodies.entity.Address;
+import com.substring.foodies.entity.Restaurant;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -20,10 +24,12 @@ public class UserDto {
     private String name;
     private String email;
     private String password;
-    private String address;
+    private List<AddressDto> addressDtoList;
     private String phoneNumber;
-    private String gender;
+    private Role role;
+    private boolean isAvailable=true;
+    private List<RestaurantDto> restaurantDtoList=new ArrayList<>();
+    private LocalDate createdDate;
+    private boolean isEnabled=true;
 
-    private LocalDateTime createdDateTime;
-    private List<RoleEntityDto> roleEntityDtoList=new ArrayList<>();
 }

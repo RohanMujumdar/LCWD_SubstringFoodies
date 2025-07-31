@@ -1,8 +1,6 @@
 package com.substring.foodies.service;
 
-import com.substring.foodies.config.AppConstants;
 import com.substring.foodies.converter.Converter;
-import com.substring.foodies.dto.RoleEntityDto;
 import com.substring.foodies.dto.SignUpUserDto;
 import com.substring.foodies.dto.UserDto;
 import com.substring.foodies.entity.RoleEntity;
@@ -148,7 +146,7 @@ public class UserServiceImpl implements UserService{
         dummyUser.setName("Ravi Kumar");
         dummyUser.setEmail("ravikumar@example.com");
         dummyUser.setPassword("securePassword123..");
-        dummyUser.setAddress("123 MyBaap Lane, Karad");
+
         dummyUser.setPhoneNumber("9876543210");
         dummyUser.setAvailable(true);
 
@@ -163,8 +161,6 @@ public class UserServiceImpl implements UserService{
         // Add these roles to a list or save them to the database as needed.
         List<RoleEntity> roleList = List.of(roleAdmin, roleGuest);
 
-        // Setting the entities via user
-        dummyUser.setRoleEntityList(roleList);
 
         // Setting the users via entity
         roleList.forEach(roleEntity -> {
@@ -181,8 +177,8 @@ public class UserServiceImpl implements UserService{
         savedUser=converter.dtoToEntity(userDto);
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
 
-        RoleEntity roleEntity=roleRepository.findByName(AppConstants.ROLE_GUEST);
-        savedUser.getRoleEntityList().add(roleEntity);
+//        RoleEntity roleEntity=roleRepository.findByName(AppConstants.ROLE_GUEST);
+//        savedUser.getRoleEntityList().add(roleEntity);
 
         userRepository.save(savedUser);
         return converter.entityToDto(savedUser);
@@ -216,20 +212,20 @@ public class UserServiceImpl implements UserService{
     public UserDto getUserById(String userId) {
 
         User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFound());
-        List<String> roleNames = user.getRoleEntityList()
-                .stream()
-                .map(RoleEntity::getName)
-                .toList();
-        System.out.println(roleNames);
-
+//        List<String> roleNames = user.getRoleEntityList()
+//                .stream()
+//                .map(RoleEntity::getName)
+//                .toList();
+//        System.out.println(roleNames);
+//
         UserDto userDto=modelMapper.map(user, UserDto.class);
-
-        List<RoleEntityDto> roleDtos = user.getRoleEntityList()
-                .stream()
-                .map(role -> modelMapper.map(role, RoleEntityDto.class))
-                .toList();
-
-        userDto.setRoleEntityDtoList(roleDtos);
+//
+//        List<RoleEntityDto> roleDtos = user.getRoleEntityList()
+//                .stream()
+//                .map(role -> modelMapper.map(role, RoleEntityDto.class))
+//                .toList();
+//
+//        userDto.setRoleEntityDtoList(roleDtos);
 
         return userDto;
     }
@@ -244,8 +240,8 @@ public class UserServiceImpl implements UserService{
         User savedUser = modelMapper.map(signUpUserDto, User.class);
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
 
-        RoleEntity roleEntity=roleRepository.findByName("ROLE_GUEST");
-        savedUser.getRoleEntityList().add(roleEntity);
+//        RoleEntity roleEntity=roleRepository.findByName("ROLE_GUEST");
+//        savedUser.getRoleEntityList().add(roleEntity);
 
         userRepository.save(savedUser);
         return  signUpUserDto;

@@ -14,6 +14,8 @@ import java.util.List;
 public interface RestaurantRepository extends JpaRepository<Restaurant, String> {
 
     List<Restaurant> findByName(String name);
+    List<Restaurant> findByisActive(boolean isActive);
+    List<Restaurant> findByIsOpen(boolean isOpen);
 
     @Query(value = "SELECT * FROM foodie_restaurant WHERE is_Open = true", nativeQuery = true)
     Page<Restaurant> findAllOpenRestaurants(Pageable pageable);

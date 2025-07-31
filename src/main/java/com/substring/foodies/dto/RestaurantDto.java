@@ -1,14 +1,10 @@
 package com.substring.foodies.dto;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Lob;
 import lombok.*;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,18 +16,16 @@ public class RestaurantDto {
 
     private String id;
     private String name;
-    private String address;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
+    private String description;
+    private AddressDto addressDto;
     private LocalTime openTime;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     private LocalTime closeTime;
-
     private boolean isOpen=true;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss a")
+    private boolean isActive = true;
+    private List<FoodItemsDto> foodItemsDtoList = new ArrayList<>();
     private LocalDateTime createdDateTime;
+
+    private UserDto owner;
 
     private String banner;
 

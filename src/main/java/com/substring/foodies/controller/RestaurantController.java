@@ -42,7 +42,7 @@ public class RestaurantController {
     @PostMapping("/")
     public ResponseEntity<Restaurant> addRestaurant(@RequestBody RestaurantDto restaurantDto)
     {
-        Restaurant restaurant=restaurantService.savedRestaurant(restaurantDto);
+        Restaurant restaurant=restaurantService.addRestaurant(restaurantDto);
         return new ResponseEntity<>(restaurant, HttpStatus.CREATED);
     }
 
