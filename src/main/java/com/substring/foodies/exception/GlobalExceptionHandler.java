@@ -13,7 +13,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.HttpClientErrorException;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +99,23 @@ public class GlobalExceptionHandler {
         return errorMap;
     }
 
+
+    @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleSQLException(SQLIntegrityConstraintViolationException ex)
+    {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.BAD_REQUEST);
+
+        if(ex.getMessage().contains("Duplicate entry"))
+        {
+            errorResponse.setMessage("User already exist");
+        }
+        else {
+            errorResponse.setMessage(ex.getMessage());
+        }
+
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
+    }
 
 
 }

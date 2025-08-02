@@ -32,12 +32,16 @@ public class SecurityConfig {
         http.csrf(e->e.disable())
                 .authorizeHttpRequests(request->
                         request
-                                .requestMatchers("/api/auth/login", "/api/auth/refresh-token").permitAll()
-                                .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
-                                .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
-                                .anyRequest().authenticated()
+//                                .requestMatchers("/api/**").authenticated()
+                                .anyRequest().permitAll()
+//                .authorizeHttpRequests(request->
+//                        request
+//                                .requestMatchers("/api/auth/login", "/api/auth/refresh-token").permitAll()
+//                                .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
+//                                .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
+//                                .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
+//                                .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+//                                .anyRequest().authenticated()
                 );
 
         http.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

@@ -100,7 +100,7 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Override
     public RestaurantDto getRestaurantById(String id) {
 
-        Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound());
+        Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound("Restaurant not found."));
         return converter.restoEntityToDto(restaurant);
     }
 

@@ -22,9 +22,4 @@ public class ServiceLayerTest {
         userService.updateUser();
     }
 
-    @Test
-    public void testUserRole()
-    {
-        userService.testUserRole();
-    }
 }

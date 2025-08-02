@@ -57,6 +57,8 @@ public class User {
 
     private boolean isEnabled=true;
 
+    private String gender;
+
     @PrePersist
     protected void onCreate()
     {

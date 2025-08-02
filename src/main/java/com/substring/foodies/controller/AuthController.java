@@ -20,6 +20,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.http.HttpResponse;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -105,16 +107,23 @@ public class AuthController {
         return loginUserDto;
     }
 
-    @RequestMapping("/signUp")
-    public ResponseEntity<?> signUp(@Valid @RequestBody SignUpUserDto signUpUserDto)
-    {
-        logger.info("user name : {}", signUpUserDto.getName());
-        logger.info("user password : {}", signUpUserDto.getPassword());
 
-        SignUpUserDto user=userService.signUpUser(signUpUserDto);
+    @PostMapping("/signUp")
+    public ResponseEntity<?> signUp(@Valid @RequestBody SignUpUserDto signUpUserDto) {
 
-        return ResponseEntity.ok(signUpUserDto);
+        if (!signUpUserDto.getPassword().equals(signUpUserDto.getConfirmPassword())) {
+            ErrorResponse response = ErrorResponse.builder()
+                    .message("Password and Confirm Password do not match")
+                    .status(HttpStatus.BAD_REQUEST)
+                    .build();
+
+            return ResponseEntity.badRequest().body(response);  // fixed this too
+        }
+
+        SignUpUserDto user = userService.signUpUser(signUpUserDto);
+        return ResponseEntity.ok(user);  // returning the created user, not the request again
     }
+
 
     // Exception handling method: for this controller.
     // These below methods are Local Exception Handlers.

@@ -1,6 +1,7 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.entity.User;
+import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.UserRepository;
 import com.substring.foodies.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ public class CustomUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
         User user = userRepository.findByEmail(username);
+//                .orElseThrow(()->new ResourceNotFound("User Not found"));
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
         return customUserDetails;
     }

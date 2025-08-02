@@ -3,11 +3,12 @@ package com.substring.foodies.service;
 import com.substring.foodies.converter.Converter;
 import com.substring.foodies.dto.SignUpUserDto;
 import com.substring.foodies.dto.UserDto;
-import com.substring.foodies.entity.RoleEntity;
+//import com.substring.foodies.entity.RoleEntity;
+import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.User;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.RestaurantRepository;
-import com.substring.foodies.repository.RoleRepository;
+//import com.substring.foodies.repository.RoleRepository;
 import com.substring.foodies.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,8 +40,8 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private ModelMapper modelMapper;
 
-    @Autowired
-    private RoleRepository roleRepository;
+//    @Autowired
+//    private RoleRepository roleRepository;
 
     @Override
     public void save()
@@ -137,38 +138,38 @@ public class UserServiceImpl implements UserService{
 //        savedUser.getRestaurantList().add(restaurant5);
 //        userRepository.save(savedUser);
     }
-
-    @Override
-    public void testUserRole() {
-
-        User dummyUser = new User();
-        dummyUser.setId("user124");
-        dummyUser.setName("Ravi Kumar");
-        dummyUser.setEmail("ravikumar@example.com");
-        dummyUser.setPassword("securePassword123..");
-
-        dummyUser.setPhoneNumber("9876543210");
-        dummyUser.setAvailable(true);
-
-        RoleEntity roleAdmin = new RoleEntity();
-        roleAdmin.setId(1);
-        roleAdmin.setName("ROLE_ADMIN");
-
-        RoleEntity roleGuest = new RoleEntity();
-        roleGuest.setId(2);
-        roleGuest.setName("ROLE_GUEST");
-
-        // Add these roles to a list or save them to the database as needed.
-        List<RoleEntity> roleList = List.of(roleAdmin, roleGuest);
-
-
-        // Setting the users via entity
-        roleList.forEach(roleEntity -> {
-            roleEntity.getUserList().add(dummyUser);
-        });
-
-        userRepository.save(dummyUser);
-    }
+//
+//    @Override
+//    public void testUserRole() {
+//
+//        User dummyUser = new User();
+//        dummyUser.setId("user124");
+//        dummyUser.setName("Ravi Kumar");
+//        dummyUser.setEmail("ravikumar@example.com");
+//        dummyUser.setPassword("securePassword123..");
+//
+//        dummyUser.setPhoneNumber("9876543210");
+//        dummyUser.setAvailable(true);
+//
+//        RoleEntity roleAdmin = new RoleEntity();
+//        roleAdmin.setId(1);
+//        roleAdmin.setName("ROLE_ADMIN");
+//
+//        RoleEntity roleGuest = new RoleEntity();
+//        roleGuest.setId(2);
+//        roleGuest.setName("ROLE_GUEST");
+//
+//        // Add these roles to a list or save them to the database as needed.
+//        List<RoleEntity> roleList = List.of(roleAdmin, roleGuest);
+//
+//
+//        // Setting the users via entity
+//        roleList.forEach(roleEntity -> {
+//            roleEntity.getUserList().add(dummyUser);
+//        });
+//
+//        userRepository.save(dummyUser);
+//    }
 
     @Override
     public UserDto savedUser(UserDto userDto) {
@@ -205,6 +206,7 @@ public class UserServiceImpl implements UserService{
     @Override
     public UserDto getUserByEmail(String userEmail) {
         User user = userRepository.findByEmail(userEmail);
+//                .orElseThrow(()->new ResourceNotFound("User not found"));
         return converter.entityToDto(user);
     }
 
@@ -239,9 +241,7 @@ public class UserServiceImpl implements UserService{
     public SignUpUserDto signUpUser(SignUpUserDto signUpUserDto) {
         User savedUser = modelMapper.map(signUpUserDto, User.class);
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
-
-//        RoleEntity roleEntity=roleRepository.findByName("ROLE_GUEST");
-//        savedUser.getRoleEntityList().add(roleEntity);
+        savedUser.setRole(Role.USER);
 
         userRepository.save(savedUser);
         return  signUpUserDto;

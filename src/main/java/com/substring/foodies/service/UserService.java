@@ -15,7 +15,7 @@ public interface UserService {
 
     void save();
     void updateUser();
-    void testUserRole();
+
 
     UserDto savedUser(UserDto userDto);
     Page<UserDto> getAllUsers(Pageable pageable);

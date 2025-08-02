@@ -2,6 +2,7 @@ package com.substring.foodies.dto;
 
 
 import com.substring.foodies.Utility.ValidGender;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
@@ -19,7 +20,7 @@ import java.util.List;
 @Builder
 public class SignUpUserDto {
 
-    @NotEmpty(message = "Please provide the Id.")
+    @Id
     private String id;
 
     @NotEmpty(message = "Please provide your Name.")
@@ -41,5 +42,4 @@ public class SignUpUserDto {
     // We can also give our custom message.
     private String gender;
 
-    private List<RoleEntityDto> roleEntityDtoList=new ArrayList<>();
 }
