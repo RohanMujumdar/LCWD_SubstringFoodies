@@ -14,7 +14,7 @@ public class CartDto {
 
     private Long cartId;
     private LocalDateTime createdAt;
-    private UserDto creator;
+    private String creator;
     private List<CartItemsDto> cartItems;
 
 }

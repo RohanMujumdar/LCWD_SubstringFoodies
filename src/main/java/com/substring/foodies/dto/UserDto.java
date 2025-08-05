@@ -24,11 +24,11 @@ public class UserDto {
     private String name;
     private String email;
     private String password;
-    private List<AddressDto> addressDtoList;
+    private List<AddressDto> addressList;
     private String phoneNumber;
     private Role role;
     private boolean isAvailable=true;
-    private List<RestaurantDto> restaurantDtoList=new ArrayList<>();
+    private List<RestaurantDto> restaurantList=new ArrayList<>();
     private LocalDate createdDate;
     private boolean isEnabled=true;
 

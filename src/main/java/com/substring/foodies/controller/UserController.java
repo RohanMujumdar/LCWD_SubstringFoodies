@@ -52,4 +52,19 @@ public class UserController {
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
+    @PutMapping("/update/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserDto> updateUserById(@PathVariable String id, @RequestBody UserDto userDto)
+    {
+//        throw new NullPointerException("Please enter a valid number");
+        UserDto user = userService.updateUser(id, userDto);
+        return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public void deleteUserById(@PathVariable String id)
+    {
+        userService.deleteUser(id);
+    }
 }

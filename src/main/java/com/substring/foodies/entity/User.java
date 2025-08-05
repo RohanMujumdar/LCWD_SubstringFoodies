@@ -15,6 +15,7 @@ import java.util.List;
 public class User {
 
     @Id
+    @Column(nullable = false)
     private String id;
 
     @Column(nullable = false)
@@ -37,7 +38,7 @@ public class User {
     private boolean isAvailable=true;
 
     @OneToMany(mappedBy = "owner", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @ToString.Exclude
+//    @ToString.Exclude
     private List<Restaurant> restaurantList=new ArrayList<>();
 
     private LocalDate createdDate;
@@ -58,6 +59,9 @@ public class User {
     private boolean isEnabled=true;
 
     private String gender;
+
+    @OneToOne(mappedBy = "creator", cascade = CascadeType.ALL)
+    private Cart cart;
 
     @PrePersist
     protected void onCreate()

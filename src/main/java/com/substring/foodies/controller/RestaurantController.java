@@ -1,7 +1,6 @@
 package com.substring.foodies.controller;
 
 import com.substring.foodies.dto.RestaurantDto;
-import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.service.RestaurantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,18 +40,28 @@ public class RestaurantController {
     private String path;
 
     @PostMapping("/")
-    public ResponseEntity<Restaurant> addRestaurant(@RequestBody RestaurantDto restaurantDto)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RestaurantDto> addRestaurant(@RequestBody RestaurantDto restaurantDto)
     {
-        Restaurant restaurant=restaurantService.addRestaurant(restaurantDto);
+        RestaurantDto restaurant=restaurantService.addRestaurant(restaurantDto);
         return new ResponseEntity<>(restaurant, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RestaurantDto> getRestaurantById(@PathVariable  String id)
+    public ResponseEntity<RestaurantDto> getRestaurantById(@PathVariable String id)
     {
         RestaurantDto restaurantDto=restaurantService.getRestaurantById(id);
         return new ResponseEntity<>(restaurantDto, HttpStatus.OK);
     }
+
+    @GetMapping("/owner/{id}")
+    public ResponseEntity<List<RestaurantDto>> getRestaurantByOwner(@PathVariable String id)
+    {
+        List<RestaurantDto> restaurantDtoList=restaurantService.getByOwner(id);
+        return new ResponseEntity<>(restaurantDtoList, HttpStatus.OK);
+    }
+
+
 
     @GetMapping("/")
     public ResponseEntity<Page<RestaurantDto>> getAllRestaurants(@RequestParam(value="page", required = false, defaultValue = "0") int page,
@@ -59,7 +69,6 @@ public class RestaurantController {
                                                                  @RequestParam(value="sortBy", required = false, defaultValue = "id") String sortBy,
                                                                  @RequestParam(value="sortDir", required = false, defaultValue = "asc") String sortDir)
     {
-
         Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
         Pageable pageable= PageRequest.of(page, size, sort);
 
@@ -91,13 +100,16 @@ public class RestaurantController {
     }
 
     @GetMapping("/currentlyOpen")
-    public ResponseEntity<List<RestaurantDto>> findCurrentOpenRestaurants()
+    public ResponseEntity<List<RestaurantDto>> findCurrentOpenRestaurants(@RequestParam(value = "open", required = false, defaultValue = "true") boolean isActive,
+                                                                          @RequestParam(value = "active", required = false, defaultValue = "true") boolean isOpen)
+
     {
-        List<RestaurantDto> currentOpenRestaurants = restaurantService.findCurrentOpenRestaurants();
+        List<RestaurantDto> currentOpenRestaurants = restaurantService.findCurrentOpenAndActiveRestaurants(isActive, isOpen);
         return new ResponseEntity<>(currentOpenRestaurants, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<RestaurantDto> updateRestaurant(@RequestBody RestaurantDto restaurantDto, @PathVariable String id)
     {
         // Check if the restaurant with the given ID exists
@@ -107,6 +119,7 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<Void> deleteUser(@PathVariable String id)
     {
         restaurantService.deleteRestaurant(id);
@@ -115,6 +128,7 @@ public class RestaurantController {
 
     // API to handle restaurant banner;
     @PostMapping("/upload-banner/{restaurantId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<?> uploadBanner(@RequestParam("banner") MultipartFile banner,
                                           @PathVariable String restaurantId)
     {
@@ -129,6 +143,7 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/deleteBanner/{fileName}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public void deleteBanner(@PathVariable String fileName)
     {
         String fullPath=path+fileName;

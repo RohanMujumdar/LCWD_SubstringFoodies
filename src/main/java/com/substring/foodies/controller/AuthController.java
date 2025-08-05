@@ -64,7 +64,7 @@ public class AuthController {
         JwtResponse response = JwtResponse.builder()
                 .accessToken(jwtAccessToken)
                 .refreshToken(jwtRefreshToken)
-                .userDto(userDto)
+                .user(userDto)
                 .build();
 
         return ResponseEntity.ok(response);
@@ -88,7 +88,7 @@ public class AuthController {
             JwtResponse response = JwtResponse.builder()
                     .accessToken(jwtAccessToken)
                     .refreshToken(jwtRefreshToken)
-                    .userDto(userDto)
+                    .user(userDto)
                     .build();
             return ResponseEntity.ok(response);
         }
@@ -99,7 +99,7 @@ public class AuthController {
     }
 
 
-    @RequestMapping("/doLogin")
+    @PostMapping("/doLogin")
     public LoginUserDto doLogin(@Valid @RequestBody LoginUserDto loginUserDto)
     {
 //      throw new NullPointerException("Number is Null");

@@ -17,15 +17,14 @@ public class RestaurantDto {
     private String id;
     private String name;
     private String description;
-    private AddressDto addressDto;
+    private AddressDto address;
     private LocalTime openTime;
     private LocalTime closeTime;
     private boolean isOpen=true;
     private boolean isActive = true;
-    private List<FoodItemsDto> foodItemsDtoList = new ArrayList<>();
     private LocalDateTime createdDateTime;
 
-    private UserDto owner;
+    private String ownerId;
 
     private String banner;
 

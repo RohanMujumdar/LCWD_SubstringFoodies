@@ -13,7 +13,7 @@ import lombok.*;
 public class OrderItemDto {
 
     private Long id;
-    private OrderDto orderDto;
-    private FoodItemsDto foodItemsDto;
+    private OrderDto order;
+    private FoodItemsDto foodItems;
     private int quantity;
 }

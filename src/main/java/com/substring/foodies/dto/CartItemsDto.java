@@ -11,7 +11,7 @@ import lombok.*;
 public class CartItemsDto {
 
     private int id;
-    private FoodItemsDto foodItemsDto;
+    private Long foodItemsId;
     private int quantity;
-    private CartDto cartDto;
+    private Long cartId;
 }

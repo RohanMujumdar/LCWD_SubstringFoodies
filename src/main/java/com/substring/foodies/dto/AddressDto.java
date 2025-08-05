@@ -1,8 +1,7 @@
 package com.substring.foodies.dto;
 import lombok.*;
 
-@Getter
-@Setter
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -15,5 +14,5 @@ public class AddressDto {
     private String state;
     private String pincode;
     private String country;
-    private UserDto userDto;
+    private String userId;
 }

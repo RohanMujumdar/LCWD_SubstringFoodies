@@ -9,5 +9,7 @@ import lombok.*;
 @Builder
 public class AddItemToCartRequest {
 
-    private String id;
+    private String userId;
+    private Long foodItemId;
+    private int quantity;
 }

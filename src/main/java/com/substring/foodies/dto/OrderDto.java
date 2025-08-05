@@ -19,9 +19,9 @@ import java.util.List;
 public class OrderDto {
 
     private int id;
-    private UserDto userDto;
-    private RestaurantDto restaurantDto;
-    private AddressDto addressDto;
+    private UserDto user;
+    private RestaurantDto restaurant;
+    private AddressDto address;
     private int totalAmount;
     private OrderStatus status = OrderStatus.PLACED;
     private LocalDateTime orderedAt;

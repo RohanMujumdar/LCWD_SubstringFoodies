@@ -5,8 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -22,5 +21,6 @@ public class FoodItemsDto {
     private String imageUrl;
     private LocalDateTime localDateTime;
     private int discountAmount;
-    private RestaurantDto restaurantDto;
+    private String restaurantId;
+
 }

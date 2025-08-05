@@ -34,15 +34,14 @@ public class Restaurant {
 
     private boolean isOpen=true;
 
-    private boolean isActive = true;
+    private boolean isActive=true;
 
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<FoodItems> foodItemsList = new ArrayList<>();
 
     private String banner;
 
     private LocalDateTime createdDateTime;
-
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
@@ -53,5 +52,4 @@ public class Restaurant {
     {
         createdDateTime = LocalDateTime.now();
     }
-
 }

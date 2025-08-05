@@ -13,8 +13,8 @@ import java.util.List;
 
 public interface UserService {
 
-    void save();
-    void updateUser();
+
+    UserDto updateUser(String id, UserDto userDto);
 
 
     UserDto savedUser(UserDto userDto);

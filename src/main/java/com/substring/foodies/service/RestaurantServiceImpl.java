@@ -1,16 +1,11 @@
 package com.substring.foodies.service;
-
-
 import com.substring.foodies.converter.Converter;
 import com.substring.foodies.dto.FileData;
-import com.substring.foodies.dto.OrderDto;
 import com.substring.foodies.dto.RestaurantDto;
-import com.substring.foodies.dto.enums.OrderStatus;
 import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.RestaurantRepository;
-
-
+import com.substring.foodies.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +21,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+import static java.util.stream.Collectors.toList;
 
 @Service
 public class RestaurantServiceImpl implements RestaurantService{
@@ -41,23 +36,21 @@ public class RestaurantServiceImpl implements RestaurantService{
     private Converter converter;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Value("${restaurant.file.path}")
     private String bannerFolderpath;
 
     @Override
-    public Restaurant addRestaurant(RestaurantDto restaurantDto) {
-
-        // Setting the random ID for the restaurantDto
-// restaurantDto.setId(Helper.generateRandomId());
+    public RestaurantDto addRestaurant(RestaurantDto restaurantDto) {
 
         restaurantDto.setCreatedDateTime(LocalDateTime.now());
         // Instead of a converter we have used a Model Mapper
-        Restaurant restaurant = modelMapper.map(restaurantDto, Restaurant.class);
-
-        return restaurantRepository.save(restaurant);
-
+        Restaurant restaurant = restaurantRepository.save(modelMapper.map(restaurantDto, Restaurant.class));
+        return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
     @Override
@@ -87,7 +80,8 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     public List<RestaurantDto> findRestaurantByName(String name) {
-        List<Restaurant> restaurantList = restaurantRepository.findByName(name);
+        List<Restaurant> restaurantList = restaurantRepository.findByNameContainingIgnoreCase(name);
+
         return converter.restoEntityToDto(restaurantList);
     }
 
@@ -101,7 +95,7 @@ public class RestaurantServiceImpl implements RestaurantService{
     public RestaurantDto getRestaurantById(String id) {
 
         Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound("Restaurant not found."));
-        return converter.restoEntityToDto(restaurant);
+        return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
     @Override
@@ -118,13 +112,13 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     public List<RestaurantDto> findByNameLikeRestaurants(String pattern) {
-        List<Restaurant> restaurants = restaurantRepository.findByNameLike("%" + pattern + "%");
-        return restaurants.stream().map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class)).collect(Collectors.toList());
+        List<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(pattern);
+        return restaurants.stream().map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class)).collect(toList());
     }
 
     @Override
-    public List<RestaurantDto> findCurrentOpenRestaurants() {
-        return restaurantRepository.findCurrentOpenRestaurants().stream().map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class)).collect(Collectors.toList());
+    public List<RestaurantDto> findCurrentOpenAndActiveRestaurants(boolean isActive, boolean isOpen) {
+        return restaurantRepository.findByIsOpenAndIsActive(isActive, isOpen).stream().map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class)).collect(toList());
     }
 
     @Override
@@ -159,7 +153,11 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     public List<RestaurantDto> getByOwner(String ownerId) {
-        return List.of();
+
+        List<Restaurant> restaurantList = restaurantRepository.findByOwnerId(ownerId);
+        return restaurantList.stream().map(restaurant ->
+            modelMapper.map(restaurant, RestaurantDto.class)
+        ).toList();
     }
 
 }

@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,7 +32,7 @@ public class FoodItems {
     private LocalDateTime localDateTime;
     private int discountAmount;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Restaurant restaurant;
 
     @PrePersist

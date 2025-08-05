@@ -19,7 +19,7 @@ import java.util.List;
 
 public interface RestaurantService {
 
-    Restaurant addRestaurant(RestaurantDto restaurantDto);
+    RestaurantDto addRestaurant(RestaurantDto restaurantDto);
     Page<RestaurantDto> getAllRestaurants(Pageable pageable);
     RestaurantDto updateSavedRestaurant(RestaurantDto restaurantDto, String id);
     RestaurantDto getRestaurantById (String id);
@@ -29,7 +29,7 @@ public interface RestaurantService {
 
     List<RestaurantDto> findByNameLikeRestaurants(String pattern);
 
-    List<RestaurantDto> findCurrentOpenRestaurants();
+    List<RestaurantDto> findCurrentOpenAndActiveRestaurants(boolean isActive, boolean isOpen);
 
     RestaurantDto uploadBanner(MultipartFile file, String id) throws IOException;
 
