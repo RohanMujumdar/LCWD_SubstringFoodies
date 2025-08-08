@@ -59,4 +59,6 @@ public class Order {
     private PaymentMode paymentMode;
 
     private String paymentId;
+
+    private String razorpayId;
 }
