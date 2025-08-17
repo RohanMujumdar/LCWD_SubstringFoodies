@@ -14,7 +14,10 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
     List<Order> findByRestaurant(Restaurant restaurant);
+    List<Order> findByRestaurantId(String restaurantId);
     List<Order> findByUser(User user);
+    List<Order> findByUserId(String userId);
     List<Order> findByDeliveryBoy(User deliveryBoy);
+    List<Order> findByDeliveryBoyId(String userId);
 
 }

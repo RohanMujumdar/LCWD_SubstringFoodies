@@ -2,6 +2,8 @@ package com.substring.foodies.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -18,6 +20,7 @@ public class Address {
     private String state;
     private String pincode;
     private String country;
+
 
     @ManyToOne
     @JoinColumn(name = "user_id")

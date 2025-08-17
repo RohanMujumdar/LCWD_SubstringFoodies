@@ -11,5 +11,6 @@ import java.util.Optional;
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
     Optional<Cart> findByCreatorId(String creatorId);
+    Optional<Cart> findByCreator(User creator);
     void deleteByCreatorId(String creatorId);
 }

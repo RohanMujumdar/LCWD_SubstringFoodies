@@ -18,11 +18,11 @@ public interface OrderService {
 
     List<OrderDto> getOrderByUserId(String userId);
 
-    List<OrderDto> getOrdetrByDeliveryBoy(String id);
+    List<OrderDto> getOrderByDeliveryBoy(String id);
 
-    OrderDto trackOrder(Long orderId);
+    OrderDto trackOrder(int orderId);
 
-    OrderItemDto cancelOrder(Long orderId);
+    OrderDto cancelOrder(int orderId);
 
-    OrderDto updateOrderStatus(OrderStatus orderStatus);
+    OrderDto updateOrderStatus(int orderId, OrderStatus orderStatus);
 }

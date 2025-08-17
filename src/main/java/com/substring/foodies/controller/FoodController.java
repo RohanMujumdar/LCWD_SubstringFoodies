@@ -23,7 +23,7 @@ public class FoodController {
 
     // ➕ Add food item
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FoodItemsDto> addFood(@RequestBody FoodItemsDto foodItemsDto) {
         FoodItemsDto saved = foodService.addFood(foodItemsDto);
         return new ResponseEntity<>(saved, HttpStatus.CREATED);
@@ -31,7 +31,7 @@ public class FoodController {
 
     // 🔁 Update food item
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<FoodItemsDto> updateFood(@RequestBody FoodItemsDto foodItemsDto,
                                                    @PathVariable Long id) {
         FoodItemsDto updated = foodService.updateFood(foodItemsDto, id);
@@ -40,7 +40,7 @@ public class FoodController {
 
     // ❌ Delete food item
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<Void> deleteFood(@PathVariable Long id) {
         foodService.deleteFood(id);
         return ResponseEntity.noContent().build();

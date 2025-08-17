@@ -109,7 +109,7 @@ public class RestaurantController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
+//    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<RestaurantDto> updateRestaurant(@RequestBody RestaurantDto restaurantDto, @PathVariable String id)
     {
         // Check if the restaurant with the given ID exists

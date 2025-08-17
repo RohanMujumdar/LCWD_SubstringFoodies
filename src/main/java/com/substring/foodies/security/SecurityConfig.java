@@ -30,7 +30,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 
-        http.cors(Customizer.withDefaults())
+        http
+//                .cors(Customizer.withDefaults())
                 .csrf(e->e.disable())
                 .authorizeHttpRequests(request->
                         request
@@ -40,7 +41,7 @@ public class SecurityConfig {
                                         "/swagger-resources/**"
                                 ).permitAll()
                                 .requestMatchers("/api/**").permitAll()
-                                .anyRequest().authenticated()
+                                .anyRequest().permitAll()
 //                .authorizeHttpRequests(request->
 //                        request
 //                                .requestMatchers("/api/auth/login", "/api/auth/refresh-token").permitAll()

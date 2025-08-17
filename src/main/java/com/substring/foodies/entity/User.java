@@ -38,7 +38,6 @@ public class User {
     private boolean isAvailable=true;
 
     @OneToMany(mappedBy = "owner", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-//    @ToString.Exclude
     private List<Restaurant> restaurantList=new ArrayList<>();
 
     private LocalDate createdDate;

@@ -7,4 +7,7 @@ public class Helper {
     public static String generateRandomId(){
         return UUID.randomUUID().toString();
     }
+    public static int generateIntRandomId(){
+        return UUID.randomUUID().hashCode();
+    }
 }
