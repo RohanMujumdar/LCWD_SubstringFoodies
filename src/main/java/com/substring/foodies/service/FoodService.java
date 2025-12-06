@@ -1,6 +1,7 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.dto.FoodItemsDto;
+import com.substring.foodies.entity.FoodItems;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -16,7 +17,9 @@ public interface FoodService {
 
     Page<FoodItemsDto> getAllFoodItems(Pageable pageable);
 
-    List<FoodItemsDto> getFoodByRestaurant(String id);
+    List<FoodItemsDto> getFoodByRestaurant(String restoId);
+
+    List<FoodItemsDto> findByRestaurantIdAndCategory(String restoId, String category);
 
     FoodItemsDto getFoodById(Long foodId);
 }

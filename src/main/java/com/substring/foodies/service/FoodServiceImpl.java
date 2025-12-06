@@ -100,6 +100,16 @@ public class FoodServiceImpl implements FoodService{
     }
 
     @Override
+    public List<FoodItemsDto> findByRestaurantIdAndCategory(String restoId, String category) {
+
+        List<FoodItems> foodItemsList = foodItemRepository.findByRestaurantIdAndCategory(restoId, category);
+
+        return foodItemsList.stream().map(foodItem -> modelMapper
+                        .map(foodItem, FoodItemsDto.class))
+                .toList();
+    }
+
+    @Override
     public FoodItemsDto getFoodById(Long foodId) {
 
         FoodItems foodItems = foodItemRepository.findById(foodId).orElseThrow(() -> new ResourceNotFound("Food Item not found"));

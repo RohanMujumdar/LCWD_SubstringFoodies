@@ -70,4 +70,10 @@ public class FoodController {
         List<FoodItemsDto> foodItems = foodService.getFoodByRestaurant(restaurantId);
         return ResponseEntity.ok(foodItems);
     }
+
+    @GetMapping("/menuByRestaurant/{restaurantId}/category/{category}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant(@PathVariable String restaurantId, @PathVariable String category) {
+        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndCategory(restaurantId, category);
+        return ResponseEntity.ok(foodItems);
+    }
 }
