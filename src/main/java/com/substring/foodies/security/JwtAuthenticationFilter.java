@@ -39,9 +39,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //              Checks if no user is currently authenticated for this request.
                 if(SecurityContextHolder.getContext().getAuthentication()==null)
                 {
+//                    Credentials → Typically the password (or secret) used for authentication.
+//👉                  After authentication is successful, we don’t need to keep the password
+//                    in memory for security reasons, so we pass null.
                     UsernamePasswordAuthenticationToken authenticationToken=new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+//                  This adds metadata like: User’s IP address, Session details,
+//                  Browser info, (Spring Security likes to keep this.)
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+//                  Store the authenticated user in the SecurityContext
+//                  This makes the user officially logged in for this request.
+                   SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 }
             }
         }

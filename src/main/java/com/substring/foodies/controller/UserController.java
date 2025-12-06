@@ -1,7 +1,9 @@
 package com.substring.foodies.controller;
 
+import com.substring.foodies.dto.ErrorResponse;
 import com.substring.foodies.dto.UserDto;
 import com.substring.foodies.service.UserService;
+import jakarta.annotation.security.PermitAll;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -10,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
 
 @RestController
 @RequestMapping("/api/user")
@@ -23,7 +24,7 @@ public class UserController {
     }
 
     @PostMapping("/")
-    @PreAuthorize("hasRole('GUEST')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> create(@RequestBody UserDto userDto)
     {
         UserDto userDto1 = userService.savedUser(userDto);
@@ -32,6 +33,7 @@ public class UserController {
 
 
     @GetMapping("/")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<UserDto>> getAllUsers(@RequestParam(value="page", required = false, defaultValue = "0") int page,
                                                      @RequestParam(value="size", required = false, defaultValue = "10") int size,
                                                      @RequestParam(value="sortBy", required = false, defaultValue = "id") String sortBy,
@@ -45,26 +47,33 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserDto> getUserById(@PathVariable String id)
     {
-//        throw new NullPointerException("Please enter a valid number");
         UserDto user = userService.getUserById(id);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> updateUserById(@PathVariable String id, @RequestBody UserDto userDto)
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> updateUserById(@PathVariable String id, @RequestBody UserDto userDto)
     {
-//        throw new NullPointerException("Please enter a valid number");
+        if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
+            ErrorResponse response = ErrorResponse.builder()
+                    .message("Password and Confirm Password do not match")
+                    .status(HttpStatus.BAD_REQUEST)
+                    .build();
+
+            return ResponseEntity.badRequest().body(response);  // fixed this too
+        }
         UserDto user = userService.updateUser(id, userDto);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
-    @DeleteMapping("/delete/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteUserById(@PathVariable String id)
+    @DeleteMapping("/deleteMyAccount/{id}")
+    public ResponseEntity<String> deleteUserById(@PathVariable String id)
     {
         userService.deleteUser(id);
+        return ResponseEntity.ok("User deleted successfully");
     }
 }

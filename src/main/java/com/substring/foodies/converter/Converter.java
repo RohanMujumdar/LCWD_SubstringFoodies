@@ -45,7 +45,6 @@ public class Converter {
                 .collect(Collectors.toList());
     }
 
-
     public Restaurant restoDtoToEntity(RestaurantDto restaurantDto) {
 
         Restaurant restaurant = modelMapper.map(restaurantDto, Restaurant.class);

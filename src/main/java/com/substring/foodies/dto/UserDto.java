@@ -24,9 +24,10 @@ public class UserDto {
     private String name;
     private String email;
     private String password;
+    private String confirmPassword;
     private List<AddressDto> addressList;
     private String phoneNumber;
-    private Role role;
+    private Role role = Role.ROLE_USER;
     private boolean isAvailable=true;
     private List<RestaurantDto> restaurantList=new ArrayList<>();
     private LocalDate createdDate;

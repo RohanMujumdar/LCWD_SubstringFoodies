@@ -42,19 +42,6 @@ public class User {
 
     private LocalDate createdDate;
 
-
-//    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-//    @JoinTable(name = "user_role",
-//
-//                // Parent's column will be Join Column
-//                joinColumns = @JoinColumn(name = "user_id"),
-//
-//                // Child's column will be Inverse Join Column
-//                inverseJoinColumns = @JoinColumn(name = "role_id")
-//    )
-//    private List<RoleEntity> roleEntityList=new ArrayList<>();
-
-
     private boolean isEnabled=true;
 
     private String gender;
@@ -67,4 +54,5 @@ public class User {
     {
         createdDate = LocalDate.now();
     }
+
 }

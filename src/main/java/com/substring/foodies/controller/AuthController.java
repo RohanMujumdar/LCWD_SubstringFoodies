@@ -11,16 +11,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.http.HttpResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -59,7 +55,7 @@ public class AuthController {
         String jwtRefreshToken = jwtService.generateToken(loginUserDto.email(), false);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(loginUserDto.email());
-        UserDto userDto = modelMapper.map(userService.getUserByEmail(loginUserDto.email()), UserDto.class);
+        UserDto userDto = modelMapper.map(userService.getUserByEmail(userDetails.getUsername()), UserDto.class);
 
         JwtResponse response = JwtResponse.builder()
                 .accessToken(jwtAccessToken)
@@ -98,14 +94,6 @@ public class AuthController {
         }
     }
 
-
-    @PostMapping("/doLogin")
-    public LoginUserDto doLogin(@Valid @RequestBody LoginUserDto loginUserDto)
-    {
-//      throw new NullPointerException("Number is Null");
-        logger.info("Login user email: {}");
-        return loginUserDto;
-    }
 
 
     @PostMapping("/signUp")

@@ -38,11 +38,10 @@ public class UserServiceImpl implements UserService{
     private ModelMapper modelMapper;
 
 
-
-    public UserDto updateUser(String id, UserDto userDto)
+    public UserDto updateUser(String userId, UserDto userDto)
     {
-        User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No User Found"));
+        User existingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFound(String.format("User not found with id = %s", userId)));
 
         // Update the fields (excluding ID, createdDate, and associations unless needed)
         existingUser.setName(userDto.getName());
@@ -78,11 +77,6 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public UserDto updateSavedUser(UserDto userDto, String id) {
-        return null;
-    }
-
-    @Override
     public List<UserDto> getUserByName(String userName) {
 
         List<User> user=userRepository.findByName(userName);
@@ -91,32 +85,32 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public UserDto getUserByEmail(String userEmail) {
-        User user = userRepository.findByEmail(userEmail);
-//                .orElseThrow(()->new ResourceNotFound("User not found"));
+        User user = userRepository.findByEmail(userEmail).orElseThrow(()->new ResourceNotFound(String.format("User not found with email = %s", userEmail)));
         return converter.entityToDto(user);
     }
 
     @Override
     public UserDto getUserById(String userId) {
 
-        User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFound());
+        User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFound(String.format("User not found with id = %s", userId)));
         UserDto userDto=modelMapper.map(user, UserDto.class);
         return userDto;
     }
 
     @Override
     public void deleteUser(String userId) {
+
+        userRepository.findById(userId).orElseThrow(()->new ResourceNotFound(String.format("User not found with id = %s", userId)));
         userRepository.deleteById(userId);
+
     }
 
     @Override
     public SignUpUserDto signUpUser(SignUpUserDto signUpUserDto) {
         User savedUser = modelMapper.map(signUpUserDto, User.class);
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
-        savedUser.setRole(Role.ROLE_USER);
 
-        userRepository.save(savedUser);
-        return  signUpUserDto;
+        return modelMapper.map(userRepository.save(savedUser), SignUpUserDto.class);
     }
 
     @Override

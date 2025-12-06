@@ -32,5 +32,4 @@ public class DeliveryEarning {
 
     private LocalDateTime deliveryTime;
 
-
 }

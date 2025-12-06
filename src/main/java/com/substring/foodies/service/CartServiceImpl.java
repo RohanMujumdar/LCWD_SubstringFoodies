@@ -7,6 +7,7 @@ import com.substring.foodies.entity.Cart;
 import com.substring.foodies.entity.CartItems;
 import com.substring.foodies.entity.FoodItems;
 import com.substring.foodies.entity.User;
+import com.substring.foodies.exception.BadItemRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.CartRepository;
 import com.substring.foodies.repository.FoodItemRepository;
@@ -39,10 +40,10 @@ public class CartServiceImpl implements CartService{
         Long foodItemId = addItemToCartRequest.getFoodItemId();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFound("User Not Found"));
+                .orElseThrow(() -> new ResourceNotFound(String.format("User not found with id = %s", userId)));
 
         FoodItems foodItem = foodItemRepository.findById(foodItemId)
-                .orElseThrow(() -> new ResourceNotFound("Food Item Not Found"));
+                .orElseThrow(() -> new ResourceNotFound(String.format("Food item not found with id = %s", foodItemId)));
 
         if(!foodItem.isAvailable())
         {
@@ -68,10 +69,10 @@ public class CartServiceImpl implements CartService{
 
         if(!isFoodItemFromSameRestaurant)
         {
-            throw new ResourceNotFound("Food item is not from same restaurant. Please clear the cart.");
+            throw new BadItemRequestException("Only items from the same restaurant can be added to the cart. Please clear the cart and try again.");
         }
 
-            // Check if item already exists in cart
+        // Check if item already exists in cart
         boolean existing = false;
         List<CartItems> cartItemsList = cart.getCartItems();
         for (CartItems item : cartItemsList) {
@@ -101,7 +102,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public CartDto getCart(String userId) {
 
-        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound("No user found"));
+        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound(String.format("Cart not found for userId = %s", userId)));
         return modelMapper.map(cart, CartDto.class);
 
     }
@@ -109,7 +110,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public CartDto removeItemFromCart(int cartItemId, String userId) {
 
-        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound("No user found"));
+        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound(String.format("Cart not found for userId = %s", userId)));
         boolean isExisting = false;
         for (CartItems items: cart.getCartItems())
         {
@@ -122,9 +123,11 @@ public class CartServiceImpl implements CartService{
             }
         }
 
-        if(isExisting == false)
+        if(!isExisting)
         {
-            throw new ResourceNotFound("Item not found");
+            throw new ResourceNotFound(
+                    String.format("Item not found in cart for itemId = %s", cartItemId)
+            );
         }
 
         return modelMapper.map(cart, CartDto.class);
@@ -132,7 +135,7 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public CartDto reduceItemFromCart(int cartItemId, String userId) {
-        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound("No user found"));
+        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound(String.format("Cart not found for userId = %s", userId)));
         boolean isExisting = false;
         for (CartItems items: cart.getCartItems())
         {
@@ -149,9 +152,11 @@ public class CartServiceImpl implements CartService{
             }
         }
 
-        if(isExisting == false)
+        if(!isExisting)
         {
-            throw new ResourceNotFound("Item not found");
+            throw new ResourceNotFound(
+                    String.format("Item not found in cart for itemId = %s", cartItemId)
+            );
         }
 
         return modelMapper.map(cart, CartDto.class);
@@ -160,7 +165,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public List<CartItemsDto> getCartItems(String userId) {
 
-        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound("User Not Found"));
+        Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound(String.format("Cart not found with id = %s", userId)));
 
         List<CartItems> cartItems = cart.getCartItems();
 
@@ -170,7 +175,7 @@ public class CartServiceImpl implements CartService{
     @Override
     public void clearCart(String userId) {
         Cart cart = cartRepository.findByCreatorId(userId)
-                .orElseThrow(() -> new ResourceNotFound("Cart not found for user"));
+                .orElseThrow(() -> new ResourceNotFound(String.format("Cart not found for userId = %s", userId)));
 
         cart.getCartItems().clear(); // removes all cart items
         cartRepository.save(cart);  // persist the change

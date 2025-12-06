@@ -43,7 +43,7 @@ public class FoodServiceImpl implements FoodService{
     public FoodItemsDto updateFood(FoodItemsDto foodItemsDto, Long id) {
         // Find the existing food item by ID
         FoodItems foodItems = foodItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Food item not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFound("Food item not found with id: " + id));
 
         // Update fields
         foodItems.setName(foodItemsDto.getName());
@@ -57,7 +57,7 @@ public class FoodServiceImpl implements FoodService{
         // Optional: update restaurant if necessary
         if (foodItemsDto.getRestaurantId() != null) {
             Restaurant restaurant = restaurantRepository.findById(foodItemsDto.getRestaurantId())
-                    .orElseThrow(() -> new RuntimeException("Restaurant not found with id: " + foodItemsDto.getRestaurantId()));
+                    .orElseThrow(() -> new ResourceNotFound("Restaurant not found with id: " + foodItemsDto.getRestaurantId()));
             foodItems.setRestaurant(restaurant);
         }
 

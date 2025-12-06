@@ -1,8 +1,11 @@
 package com.substring.foodies.exception;
 
 import com.substring.foodies.dto.ErrorResponse;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,9 +16,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.client.HttpClientErrorException;
-
-import java.sql.SQLIntegrityConstraintViolationException;
+import java.security.SignatureException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -100,8 +101,8 @@ public class GlobalExceptionHandler {
     }
 
 
-    @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleSQLException(SQLIntegrityConstraintViolationException ex)
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityException(DataIntegrityViolationException ex)
     {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setStatus(HttpStatus.BAD_REQUEST);
@@ -117,5 +118,56 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<?> handleExpiredToken(ExpiredJwtException ex) {
+
+        ex.printStackTrace();
+        logger.error("ERROR: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body("Refresh token is expired. Please login again.");
+    }
+
+    @ExceptionHandler(MalformedJwtException.class)
+    public ResponseEntity<?> handleInvalidToken(MalformedJwtException ex) {
+
+        ex.printStackTrace();
+        logger.error("ERROR: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Invalid refresh token format.");
+    }
+
+    @ExceptionHandler(SignatureException.class)
+    public ResponseEntity<?> handleInvalidSignature(SignatureException ex) {
+
+        ex.printStackTrace();
+        logger.error("ERROR: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Invalid token signature.");
+    }
+
+    @ExceptionHandler(io.jsonwebtoken.security.SignatureException.class)
+    public ResponseEntity<?> handleJwtSignature(io.jsonwebtoken.security.SignatureException ex){
+
+        ex.printStackTrace();
+        logger.error("ERROR: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Invalid JWT Signature");
+    }
+
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleGeneralException(Exception ex) {
+
+        ex.printStackTrace();
+        logger.error("ERROR: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Something went wrong.");
+    }
 
 }

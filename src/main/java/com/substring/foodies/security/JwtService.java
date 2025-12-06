@@ -6,6 +6,9 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -17,9 +20,12 @@ public class JwtService {
 
     private static final long EXPIRATION_TIME = 15*60*1000;
     private static final long EXPIRATION_TIME_REFRESH_TOKEN = 24*60*60*1000;
-    private static final String SECRET = "sdfasdvsdagbfkjadfkjsgksdfgjkgjkg";
+
     private static final String REFRESH_TOKEN_TYPE="refresh_token";
     private static final String ACCESS_TOKEN_TYPE="access_token";
+
+    @Value("${jwt.secret}")
+    private String SECRET;
 
     public String generateToken(String username, boolean isAccessToken)
     {

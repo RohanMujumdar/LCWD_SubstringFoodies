@@ -19,7 +19,6 @@ public interface UserService {
 
     UserDto savedUser(UserDto userDto);
     Page<UserDto> getAllUsers(Pageable pageable);
-    UserDto updateSavedUser(UserDto userDto, String id);
     List<UserDto> getUserByName(String userName);
     UserDto getUserByEmail(String userEmail);
     UserDto getUserById (String userId);

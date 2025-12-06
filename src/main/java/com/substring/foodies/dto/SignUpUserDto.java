@@ -2,6 +2,7 @@ package com.substring.foodies.dto;
 
 
 import com.substring.foodies.Utility.ValidGender;
+import com.substring.foodies.dto.enums.Role;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,4 +44,11 @@ public class SignUpUserDto {
     // We can also give our custom message.
     private String gender;
 
+    private List<AddressDto> addressList;
+    private String phoneNumber;
+    private Role role = Role.ROLE_USER;
+    private boolean isAvailable=true;
+    private List<RestaurantDto> restaurantList=new ArrayList<>();
+    private LocalDate createdDate;
+    private boolean isEnabled=true;
 }

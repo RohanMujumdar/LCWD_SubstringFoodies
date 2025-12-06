@@ -40,16 +40,13 @@ public class SecurityConfig {
                                         "/swagger-ui/**",
                                         "/swagger-resources/**"
                                 ).permitAll()
-                                .requestMatchers("/api/**").permitAll()
-                                .anyRequest().permitAll()
-//                .authorizeHttpRequests(request->
-//                        request
-//                                .requestMatchers("/api/auth/login", "/api/auth/refresh-token").permitAll()
-//                                .requestMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
-//                                .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
-//                                .requestMatchers(HttpMethod.PUT, "/api/**").hasRole("ADMIN")
-//                                .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
-//                                .anyRequest().authenticated()
+                                .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers(HttpMethod.DELETE, "/api/food/**", "/api/restaurant/**").hasAnyRole("ADMIN", "RESTAURANT_ADMIN")
+                                .requestMatchers(HttpMethod.PUT, "/api/food/**", "/api/restaurant/**").hasAnyRole("ADMIN", "RESTAURANT_ADMIN")
+                                .requestMatchers(HttpMethod.POST, "/api/food/**", "/api/restaurant/**").hasAnyRole("ADMIN", "RESTAURANT_ADMIN")
+                                .requestMatchers(HttpMethod.DELETE, "/api/user/deleteMyAccount/**").authenticated()
+                                .requestMatchers("/api/user/**").hasRole("ADMIN")
+                                .anyRequest().authenticated()
                 );
 
         http.sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
