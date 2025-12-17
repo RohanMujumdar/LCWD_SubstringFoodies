@@ -11,8 +11,7 @@ import lombok.*;
 public class CartItems {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private String id;
 
     @OneToOne
     @JoinColumn(name = "food_id")

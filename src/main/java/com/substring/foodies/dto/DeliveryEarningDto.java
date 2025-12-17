@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 public class DeliveryEarningDto {
 
-    private Long id;
+    private String id;
     private User deliveryBoy;
     private Order order;
     private int amount;

@@ -10,8 +10,8 @@ import lombok.*;
 @Builder
 public class CartItemsDto {
 
-    private int id;
+    private String id;
     private Long foodItemsId;
     private int quantity;
-    private Long cartId;
+    private String cartId;
 }

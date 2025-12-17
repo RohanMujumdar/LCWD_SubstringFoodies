@@ -31,14 +31,14 @@ public class FoodController {
     // 🔁 Update food item
     @PutMapping("/{id}")
     public ResponseEntity<FoodItemsDto> updateFood(@RequestBody FoodItemsDto foodItemsDto,
-                                                   @PathVariable Long id) {
+                                                   @PathVariable String id) {
         FoodItemsDto updated = foodService.updateFood(foodItemsDto, id);
         return ResponseEntity.ok(updated);
     }
 
     // ❌ Delete food item
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteFood(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteFood(@PathVariable String id) {
         foodService.deleteFood(id);
         return ResponseEntity.noContent().build();
     }
@@ -59,7 +59,7 @@ public class FoodController {
 
     // 🔍 Get food item by ID
     @GetMapping("/{id}")
-    public ResponseEntity<FoodItemsDto> getFoodById(@PathVariable Long id) {
+    public ResponseEntity<FoodItemsDto> getFoodById(@PathVariable String id) {
         FoodItemsDto foodItem = foodService.getFoodById(id);
         return ResponseEntity.ok(foodItem);
     }
@@ -72,8 +72,50 @@ public class FoodController {
     }
 
     @GetMapping("/menuByRestaurant/{restaurantId}/category/{category}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant(@PathVariable String restaurantId, @PathVariable String category) {
-        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndCategory(restaurantId, category);
+    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant_Category(@PathVariable String restaurantId, @PathVariable String category) {
+        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodCategory(restaurantId, category);
+        return ResponseEntity.ok(foodItems);
+    }
+
+    @GetMapping("/menuByRestaurant/{restaurantId}/subcategory/{subcategory}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant_subCategory(@PathVariable String restaurantId, @PathVariable String subcategory) {
+        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodSubCategory(restaurantId, subcategory);
+        return ResponseEntity.ok(foodItems);
+    }
+
+    @GetMapping("/menuByRestaurant/{restaurantId}/type/{type}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant_type(@PathVariable String restaurantId, @PathVariable String type) {
+        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodType(restaurantId, type);
+        return ResponseEntity.ok(foodItems);
+    }
+
+    @GetMapping("/menuByCategory/{category}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodByCategory(@PathVariable String category) {
+        List<FoodItemsDto> foodItems = foodService.findByFoodCategory(category);
+        return ResponseEntity.ok(foodItems);
+    }
+
+    @GetMapping("/menuBySubCategory/{subCategory}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodBySubCategory(@PathVariable String subCategory) {
+        List<FoodItemsDto> foodItems = foodService.findByFoodSubCategory(subCategory);
+        return ResponseEntity.ok(foodItems);
+    }
+
+    @GetMapping("/menuByType/{type}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodByType(@PathVariable String type) {
+        List<FoodItemsDto> foodItems = foodService.findByFoodType(type);
+        return ResponseEntity.ok(foodItems);
+    }
+
+    @GetMapping("/{name}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodByName(@PathVariable String name) {
+        List<FoodItemsDto> foodItems = foodService.findByFoodName(name);
+        return ResponseEntity.ok(foodItems);
+    }
+
+    @GetMapping("/restaurant/{restaurantId}/{name}")
+    public ResponseEntity<List<FoodItemsDto>> getFoodByResaturantAndFooName(@PathVariable String restaurantId, @PathVariable String name) {
+        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodName(restaurantId, name);
         return ResponseEntity.ok(foodItems);
     }
 }

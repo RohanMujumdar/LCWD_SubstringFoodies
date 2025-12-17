@@ -40,7 +40,6 @@ public class RestaurantController {
     private String path;
 
     @PostMapping("/")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RestaurantDto> addRestaurant(@RequestBody RestaurantDto restaurantDto)
     {
         RestaurantDto restaurant=restaurantService.addRestaurant(restaurantDto);
@@ -102,14 +101,12 @@ public class RestaurantController {
     @GetMapping("/currentlyOpen")
     public ResponseEntity<List<RestaurantDto>> findCurrentOpenRestaurants(@RequestParam(value = "open", required = false, defaultValue = "true") boolean isActive,
                                                                           @RequestParam(value = "active", required = false, defaultValue = "true") boolean isOpen)
-
     {
         List<RestaurantDto> currentOpenRestaurants = restaurantService.findCurrentOpenAndActiveRestaurants(isActive, isOpen);
         return new ResponseEntity<>(currentOpenRestaurants, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
-//    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<RestaurantDto> updateRestaurant(@RequestBody RestaurantDto restaurantDto, @PathVariable String id)
     {
         // Check if the restaurant with the given ID exists
@@ -119,8 +116,7 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
-    public ResponseEntity<Void> deleteUser(@PathVariable String id)
+    public ResponseEntity<Void> deleteRestaurant(@PathVariable String id)
     {
         restaurantService.deleteRestaurant(id);
         return ResponseEntity.noContent().build();
@@ -128,7 +124,6 @@ public class RestaurantController {
 
     // API to handle restaurant banner;
     @PostMapping("/upload-banner/{restaurantId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public ResponseEntity<?> uploadBanner(@RequestParam("banner") MultipartFile banner,
                                           @PathVariable String restaurantId)
     {
@@ -143,7 +138,6 @@ public class RestaurantController {
     }
 
     @DeleteMapping("/deleteBanner/{fileName}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESTAURANT')")
     public void deleteBanner(@PathVariable String fileName)
     {
         String fullPath=path+fileName;

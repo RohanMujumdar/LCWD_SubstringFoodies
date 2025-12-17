@@ -56,20 +56,20 @@ public class OrderController {
     }
 
     @GetMapping("/{orderId}/track")
-    public ResponseEntity<OrderDto> trackOrder(@PathVariable int orderId) {
+    public ResponseEntity<OrderDto> trackOrder(@PathVariable String orderId) {
         OrderDto orderDto = orderService.trackOrder(orderId);
         return ResponseEntity.ok(orderDto);
     }
 
     @PostMapping("/{orderId}/cancel")
-    public ResponseEntity<OrderDto> cancelOrder(@PathVariable int orderId) {
+    public ResponseEntity<OrderDto> cancelOrder(@PathVariable String orderId) {
         OrderDto orderItemDto = orderService.cancelOrder(orderId);
         return ResponseEntity.ok(orderItemDto);
     }
 
     @PutMapping("/{orderId}/status")
     public ResponseEntity<OrderDto> updateOrderStatus(
-            @PathVariable int orderId,
+            @PathVariable String orderId,
             @RequestBody OrderStatus orderStatus) {
         OrderDto orderDto = orderService.updateOrderStatus(orderId, orderStatus);
         return ResponseEntity.ok(orderDto);

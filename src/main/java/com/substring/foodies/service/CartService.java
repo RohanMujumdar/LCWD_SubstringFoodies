@@ -12,9 +12,9 @@ public interface CartService {
 
     CartDto getCart(String userId);
 
-    CartDto removeItemFromCart(int cartItemId, String userId);
+    CartDto removeItemFromCart(String cartItemId, String userId);
 
-    CartDto reduceItemFromCart(int cartItemId, String userId);
+    CartDto reduceItemFromCart(String cartItemId, String userId);
 
     List<CartItemsDto> getCartItems(String userId);
 

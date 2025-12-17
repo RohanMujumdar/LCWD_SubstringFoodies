@@ -2,6 +2,7 @@ package com.substring.foodies.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -11,8 +12,7 @@ import java.util.List;
 public class Address {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @Column(columnDefinition = "TEXT")
     private String addressLine;
@@ -21,8 +21,9 @@ public class Address {
     private String pincode;
     private String country;
 
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @OneToOne
     private User user;
+
+    @ManyToMany(mappedBy = "addresses")
+    private List<Restaurant> restaurants = new ArrayList<>();
 }

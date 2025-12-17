@@ -1,9 +1,13 @@
 package com.substring.foodies.service;
 import com.substring.foodies.converter.Converter;
+import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.dto.FileData;
 import com.substring.foodies.dto.RestaurantDto;
+import com.substring.foodies.entity.Address;
 import com.substring.foodies.entity.Restaurant;
+import com.substring.foodies.entity.User;
 import com.substring.foodies.exception.ResourceNotFound;
+import com.substring.foodies.repository.AddressRepository;
 import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -19,8 +23,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import static java.util.stream.Collectors.toList;
 
 @Service
@@ -31,6 +39,9 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Autowired
     private RestaurantRepository restaurantRepository;
+
+    @Autowired
+    private AddressRepository addressRepository;
 
     @Autowired
     private Converter converter;
@@ -47,11 +58,40 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Override
     public RestaurantDto addRestaurant(RestaurantDto restaurantDto) {
 
-        restaurantDto.setCreatedDateTime(LocalDateTime.now());
-        // Instead of a converter we have used a Model Mapper
-        Restaurant restaurant = restaurantRepository.save(modelMapper.map(restaurantDto, Restaurant.class));
-        return modelMapper.map(restaurant, RestaurantDto.class);
+        Restaurant restaurant = modelMapper.map(restaurantDto, Restaurant.class);
+
+        // Set owner
+        User owner = userRepository.findById(restaurantDto.getOwnerId())
+                .orElseThrow(() -> new ResourceNotFound("User not found with id = "+restaurantDto.getOwnerId()));
+        restaurant.setOwner(owner);
+
+        List<String> addressIds = restaurantDto.getAddresses()
+                                    .stream()
+                                    .map(add->add.getId())
+                                    .toList();
+
+        List<Address> addressList = addressRepository.findAllById(addressIds);
+        Set<String> set = addressList
+                            .stream()
+                            .map(add->add.getId())
+                            .collect(Collectors.toSet());
+
+        List<String> missingIds = addressIds.stream().filter(id->!set.contains(id)).toList();
+
+        if(!missingIds.isEmpty())
+        {
+            throw new ResourceNotFound("Addresses not found with ids = "+missingIds);
+        }
+
+        for (Address address : addressList) {
+            restaurant.getAddresses().add(address);
+            address.getRestaurants().add(restaurant);
+        }
+
+        Restaurant saved = restaurantRepository.save(restaurant);
+        return modelMapper.map(saved, RestaurantDto.class);
     }
+
 
     @Override
     public Page<RestaurantDto> getAllRestaurants(Pageable pageable) {
@@ -62,15 +102,44 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     public RestaurantDto updateSavedRestaurant(RestaurantDto restaurantDto, String id) {
+
         Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound());
 
         restaurant.setName(restaurantDto.getName());
-//        restaurant.setAddress(restaurantDto.getAddress());
         restaurant.setOpenTime(restaurantDto.getOpenTime());
         restaurant.setCloseTime(restaurantDto.getCloseTime());
         restaurant.setOpen(restaurantDto.isOpen());
         restaurant.setBanner(restaurantDto.getBanner());
 
+        List<String> addressIds = restaurantDto
+                                    .getAddresses()
+                                    .stream()
+                                    .map(add->add.getId())
+                                    .toList();
+
+        List<Address> addressList = addressRepository.findAllById(addressIds);
+        Set<String> set = addressList
+                            .stream()
+                            .map(add->add.getId())
+                            .collect(Collectors.toSet());
+        List<String> missingIds = addressIds
+                                    .stream()
+                                    .filter(addId->!set.contains(addId))
+                                    .toList();
+
+        if(!missingIds.isEmpty())
+        {
+            throw new ResourceNotFound("Addresses not found with ids = "+missingIds);
+        }
+        for (Address address : restaurant.getAddresses()) {
+            address.getRestaurants().remove(restaurant);
+        }
+        restaurant.getAddresses().clear();
+
+        for (Address address : addressList) {
+            restaurant.getAddresses().add(address);
+            address.getRestaurants().add(restaurant);
+        }
         // Save the updated restaurant entity back to the database
         Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
 

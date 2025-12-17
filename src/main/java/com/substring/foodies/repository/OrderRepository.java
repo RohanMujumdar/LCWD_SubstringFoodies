@@ -11,13 +11,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Integer> {
+public interface OrderRepository extends JpaRepository<Order, String> {
 
-    List<Order> findByRestaurant(Restaurant restaurant);
     List<Order> findByRestaurantId(String restaurantId);
-    List<Order> findByUser(User user);
     List<Order> findByUserId(String userId);
-    List<Order> findByDeliveryBoy(User deliveryBoy);
     List<Order> findByDeliveryBoyId(String userId);
 
 }

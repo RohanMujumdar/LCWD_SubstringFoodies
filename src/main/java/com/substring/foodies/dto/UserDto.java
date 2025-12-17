@@ -25,7 +25,7 @@ public class UserDto {
     private String email;
     private String password;
     private String confirmPassword;
-    private List<AddressDto> addressList;
+    private AddressDto address;
     private String phoneNumber;
     private Role role = Role.ROLE_USER;
     private boolean isAvailable=true;

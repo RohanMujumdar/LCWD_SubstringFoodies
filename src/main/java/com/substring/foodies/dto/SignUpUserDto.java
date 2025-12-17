@@ -44,11 +44,10 @@ public class SignUpUserDto {
     // We can also give our custom message.
     private String gender;
 
-    private List<AddressDto> addressList;
+    private AddressDto address;
     private String phoneNumber;
     private Role role = Role.ROLE_USER;
     private boolean isAvailable=true;
-    private List<RestaurantDto> restaurantList=new ArrayList<>();
     private LocalDate createdDate;
     private boolean isEnabled=true;
 }

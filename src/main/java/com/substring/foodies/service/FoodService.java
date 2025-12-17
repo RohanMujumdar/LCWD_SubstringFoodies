@@ -11,15 +11,29 @@ public interface FoodService {
 
     FoodItemsDto addFood(FoodItemsDto foodItemsDto);
 
-    FoodItemsDto updateFood(FoodItemsDto foodItemsDto, Long id);
+    FoodItemsDto updateFood(FoodItemsDto foodItemsDto, String id);
 
-    void deleteFood(Long id);
+    void deleteFood(String id);
 
     Page<FoodItemsDto> getAllFoodItems(Pageable pageable);
 
     List<FoodItemsDto> getFoodByRestaurant(String restoId);
 
-    List<FoodItemsDto> findByRestaurantIdAndCategory(String restoId, String category);
+    List<FoodItemsDto> findByRestaurantIdAndFoodCategory(String restoId, String foodCategory);
 
-    FoodItemsDto getFoodById(Long foodId);
+    List<FoodItemsDto> findByRestaurantIdAndFoodSubCategory(String restoId, String foodSubCategory);
+
+    List<FoodItemsDto> findByRestaurantIdAndFoodType(String restoId, String foodType);
+
+    List<FoodItemsDto> findByFoodCategory(String foodCategory);
+
+    List<FoodItemsDto> findByFoodSubCategory(String foodSubCategory);
+
+    List<FoodItemsDto> findByFoodType(String foodType);
+
+    List<FoodItemsDto> findByFoodName(String foodName);
+
+    List<FoodItemsDto> findByRestaurantIdAndFoodName(String restoId, String foodName);
+
+    FoodItemsDto getFoodById(String foodId);
 }

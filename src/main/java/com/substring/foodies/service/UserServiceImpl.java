@@ -1,14 +1,18 @@
 package com.substring.foodies.service;
 
+import com.substring.foodies.controller.AuthController;
 import com.substring.foodies.converter.Converter;
 import com.substring.foodies.dto.SignUpUserDto;
 import com.substring.foodies.dto.UserDto;
 import com.substring.foodies.dto.enums.Role;
+import com.substring.foodies.entity.Address;
 import com.substring.foodies.entity.User;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.repository.UserRepository;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,6 +41,7 @@ public class UserServiceImpl implements UserService{
     @Autowired
     private ModelMapper modelMapper;
 
+    private Logger logger= LoggerFactory.getLogger(AuthController.class);
 
     public UserDto updateUser(String userId, UserDto userDto)
     {
@@ -107,8 +112,12 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public SignUpUserDto signUpUser(SignUpUserDto signUpUserDto) {
+
         User savedUser = modelMapper.map(signUpUserDto, User.class);
+        Address address = savedUser.getAddress();
+
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
+        address.setUser(savedUser);
 
         return modelMapper.map(userRepository.save(savedUser), SignUpUserDto.class);
     }

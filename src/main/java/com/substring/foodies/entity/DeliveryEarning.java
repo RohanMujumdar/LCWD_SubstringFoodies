@@ -17,8 +17,7 @@ import java.time.LocalDateTime;
 public class DeliveryEarning {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     @ManyToOne
     @JoinColumn(name = "delivery_boy_id")

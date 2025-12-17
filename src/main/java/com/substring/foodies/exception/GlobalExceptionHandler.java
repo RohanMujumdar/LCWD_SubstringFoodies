@@ -9,6 +9,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.FieldError;
 
 import org.springframework.validation.ObjectError;
@@ -170,4 +173,17 @@ public class GlobalExceptionHandler {
                 .body("Something went wrong.");
     }
 
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    public ResponseEntity<?> internalAuthenticationServiceExceptionHandler(InternalAuthenticationServiceException ex)
+    {
+        ex.printStackTrace();
+        logger.error("ERROR: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .message("Username not found.")
+                .status(HttpStatus.NOT_FOUND)
+                .build();
+
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
 }

@@ -3,7 +3,6 @@ package com.substring.foodies.controller;
 import com.substring.foodies.dto.ErrorResponse;
 import com.substring.foodies.dto.UserDto;
 import com.substring.foodies.service.UserService;
-import jakarta.annotation.security.PermitAll;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

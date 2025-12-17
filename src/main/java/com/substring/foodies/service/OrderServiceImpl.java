@@ -4,6 +4,7 @@ import com.substring.foodies.Utility.Helper;
 import com.substring.foodies.dto.OrderDto;
 import com.substring.foodies.dto.OrderPlaceRequest;
 import com.substring.foodies.dto.enums.OrderStatus;
+import com.substring.foodies.dto.enums.PaymentMode;
 import com.substring.foodies.dto.enums.PaymentStatus;
 import com.substring.foodies.entity.*;
 import com.substring.foodies.exception.ResourceNotFound;
@@ -16,6 +17,8 @@ import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,17 +50,16 @@ public class OrderServiceImpl implements OrderService {
     public OrderDto placeOrderRequest(OrderPlaceRequest orderPlaceRequest) {
 
         User user = userRepository.findById(orderPlaceRequest.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        Cart cart = cartRepository.findByCreator(user).orElseThrow(() -> new ResourceNotFound("Cart Not Found"));
+                .orElseThrow(() -> new ResourceNotFound(String.format("User not found with id = %s", orderPlaceRequest.getUserId())));
+        Cart cart = cartRepository.findByCreator(user).orElseThrow(() -> new ResourceNotFound(String.format("Cart Not Found for userId = %s", user.getId())));
 
         Restaurant restaurant = restaurantRepository.findById(orderPlaceRequest.getRestaurantId())
-                .orElseThrow(() -> new ResourceNotFound("Restaurant not found"));
+                .orElseThrow(() -> new ResourceNotFound(String.format("Restaurant not found with id = %s", orderPlaceRequest.getRestaurantId())));
 
         List<CartItems> cartItems = cart.getCartItems();
         System.out.println("size of the cart: " + cartItems.size());
         if (cartItems.isEmpty()) {
-            throw new ResourceNotFound(
-                    "Cart is empty");
+            throw new IllegalStateException("Cart is empty");
         }
         // Convert cart items to order items
         Order order = new Order();
@@ -68,14 +70,19 @@ public class OrderServiceImpl implements OrderService {
         if (address.getId() == null)
             address.setId(null);
 
-
         order.setAddress(address);
         order.setStatus(OrderStatus.PLACED);
         order.setOrderedAt(LocalDateTime.now());
-        order.setPaymentStatus(
-                PaymentStatus.NOT_PAID);
-        order.setPaymentMode(
-                orderPlaceRequest.getPaymentMode());
+        order.setPaymentMode(orderPlaceRequest.getPaymentMode());
+
+        if(orderPlaceRequest.getPaymentMode().equals(PaymentMode.CASH_ON_DELIVERY))
+        {
+            order.setPaymentStatus(PaymentStatus.NOT_PAID);
+        }
+        else
+        {
+            order.setPaymentStatus(PaymentStatus.PAID);
+        }
 
         final AtomicInteger totalAmount = new AtomicInteger(0);
         List<OrderItem> orderItems = cartItems.stream()
@@ -84,8 +91,10 @@ public class OrderServiceImpl implements OrderService {
                     orderItem.setOrder(order);
                     orderItem.setQuantity(cartItem.getQuantity());
                     orderItem.setFoodItems(cartItem.getFoodItems());
+//                    totalAmount.set(totalAmount.get()
+//                            +( (int)( cartItem.getFoodItems().actualPrice() * cartItem.getQuantity())));
                     totalAmount.set(totalAmount.get()
-                            +( (int)( cartItem.getFoodItems().actualPrice() * cartItem.getQuantity())));
+                            +(cartItem.getTotalCartItemsPrice()));
 
                     return orderItem;
                 })
@@ -132,23 +141,33 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderDto trackOrder(int orderId) {
+    public OrderDto trackOrder(String orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFound(String.format("Order not found for orderId = %s", orderId)));
         return mapper.map(order, OrderDto.class);
     }
 
     @Override
-    public OrderDto cancelOrder(int orderId) {
+    public OrderDto cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFound(String.format("Order not found for orderId = %s", orderId)));
         order.setStatus(OrderStatus.CANCELLED);
+
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        long minutesPassed = Duration.between(order.getOrderedAt(), currentTime).toMinutes();
+
+        if(minutesPassed > 10)
+        {
+            order.setPaymentStatus(PaymentStatus.REFUNDED);
+        }
+
         Order savedOrder = orderRepository.save(order);
         return mapper.map(savedOrder, OrderDto.class);
     }
 
     @Override
-    public OrderDto updateOrderStatus(int orderId, OrderStatus orderStatus) {
+    public OrderDto updateOrderStatus(String orderId, OrderStatus orderStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFound("Order not found with id: " + orderId));
         order.setStatus(orderStatus);

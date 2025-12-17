@@ -23,8 +23,13 @@ public class Restaurant {
     @Lob
     private String description;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    private Address address;
+    @ManyToMany
+    @JoinTable(
+            name = "restaurant_address", // join table name
+            joinColumns = @JoinColumn(name = "restaurant_id"), // this entity's FK
+            inverseJoinColumns = @JoinColumn(name = "address_id") // other entity's FK
+    )
+    private List<Address> addresses = new ArrayList<>();
 
     @Column(name = "open_time")
     private LocalTime openTime;
@@ -36,8 +41,16 @@ public class Restaurant {
 
     private boolean isActive=true;
 
-    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @ManyToMany
+    @JoinTable(
+            name = "restaurant_food",
+            joinColumns = @JoinColumn(name = "restaurant_id"),
+            inverseJoinColumns = @JoinColumn(name = "food_id")
+    )
     private List<FoodItems> foodItemsList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Cart> cartList = new ArrayList<>();
 
     private String banner;
 

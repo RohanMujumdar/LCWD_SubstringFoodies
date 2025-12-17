@@ -15,7 +15,6 @@ import java.util.List;
 public class User {
 
     @Id
-    @Column(nullable = false)
     private String id;
 
     @Column(nullable = false)
@@ -27,8 +26,8 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @OneToMany(mappedBy = "user")
-    private List<Address> address;
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Address address;
 
     private String phoneNumber;
 

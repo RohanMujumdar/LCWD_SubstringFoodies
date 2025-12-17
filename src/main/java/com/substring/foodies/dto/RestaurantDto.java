@@ -17,7 +17,7 @@ public class RestaurantDto {
     private String id;
     private String name;
     private String description;
-    private AddressDto address;
+    private List<AddressDto> addresses = new ArrayList<>();
     private LocalTime openTime;
     private LocalTime closeTime;
     private boolean isOpen=true;

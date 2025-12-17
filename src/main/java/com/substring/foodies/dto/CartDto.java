@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 public class CartDto {
 
-    private Long cartId;
+    private String id;
     private LocalDateTime createdAt;
     private String creator;
     private List<CartItemsDto> cartItems;

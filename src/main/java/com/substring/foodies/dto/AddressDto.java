@@ -8,11 +8,10 @@ import lombok.*;
 @Builder
 public class AddressDto {
 
-    private Long id;
+    private String id;
     private String addressLine;
     private String city;
     private String state;
     private String pincode;
     private String country;
-    private String userId;
 }

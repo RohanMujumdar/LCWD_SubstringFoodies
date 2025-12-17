@@ -16,8 +16,10 @@ import java.util.List;
 public class Cart {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long cartId;
+    private String id;
+
+    @ManyToOne
+    private Restaurant restaurant;
 
     private LocalDateTime createdAt;
 

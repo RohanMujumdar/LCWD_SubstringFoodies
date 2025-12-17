@@ -12,7 +12,7 @@ import lombok.*;
 @Builder
 public class OrderItemDto {
 
-    private Long id;
+    private String id;
     private OrderDto order;
     private FoodItemsDto foodItems;
     private int quantity;

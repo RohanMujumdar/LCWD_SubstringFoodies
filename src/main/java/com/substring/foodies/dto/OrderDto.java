@@ -18,7 +18,7 @@ import java.util.List;
 @Builder
 public class OrderDto {
 
-    private int id;
+    private String id;
     private UserDto user;
     private RestaurantDto restaurant;
     private AddressDto address;

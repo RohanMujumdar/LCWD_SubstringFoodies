@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-
 @RestController
 @RequestMapping("/api/payment")
+@CrossOrigin(origins = "*")
 // Put the Url of your front-end in here, it will help you resolve the CORS issue.
 // @CrossOrigin
 public class PaymentController {
@@ -34,13 +34,9 @@ public class PaymentController {
 
 
     @PostMapping("/verify/{orderId}")
-    public ResponseEntity<?> verifyPayment(@PathVariable int orderId,
+    public ResponseEntity<?> verifyPayment(@PathVariable String orderId,
                                            @RequestBody PaymentVerifyObject paymentVerifyObject) throws RazorpayException {
-        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFound("Order not found with Id: " + orderId));
-        String paymentOrderId = order.getPaymentId();
-
-        String payload = paymentOrderId + '|' + paymentVerifyObject.getRazorpayPaymentId();
-        RazorpayClient razorpayClient = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new ResourceNotFound(String.format("Order not found for orderId = %s", orderId)));
 
         JSONObject options = new JSONObject();
         options.put("razorpay_order_id", order.getRazorpayId());
@@ -64,9 +60,9 @@ public class PaymentController {
 
 
     @PostMapping("/{orderId}")
-    public ResponseEntity<?> createPayment(@PathVariable int orderId) throws RazorpayException {
+    public ResponseEntity<?> createPayment(@PathVariable String orderId) throws RazorpayException {
 
-        Order order = orderRepository.findById(orderId).orElseThrow(()->new ResourceNotFound("Order Not Found"));
+        Order order = orderRepository.findById(orderId).orElseThrow(()->new ResourceNotFound(String.format("Order not found for orderId = %s", orderId)));
 
         RazorpayClient razorpayClient = new RazorpayClient(razorpayKeyId, razorpayKeySecret);
 
@@ -79,6 +75,7 @@ public class PaymentController {
         orderRequest.put("notes", noteObject);
 
         com.razorpay.Order razorpay = razorpayClient.orders.create(orderRequest);
+
 
         Map<String, Object> response = Map.of(
                 "id", razorpay.get("id"),

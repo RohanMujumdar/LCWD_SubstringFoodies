@@ -10,6 +10,7 @@ import lombok.*;
 public class AddItemToCartRequest {
 
     private String userId;
-    private Long foodItemId;
+    private String foodItemId;
     private int quantity;
+    private String restoId;
 }

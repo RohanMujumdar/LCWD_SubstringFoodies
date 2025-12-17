@@ -20,9 +20,9 @@ public interface OrderService {
 
     List<OrderDto> getOrderByDeliveryBoy(String id);
 
-    OrderDto trackOrder(int orderId);
+    OrderDto trackOrder(String orderId);
 
-    OrderDto cancelOrder(int orderId);
+    OrderDto cancelOrder(String orderId);
 
-    OrderDto updateOrderStatus(int orderId, OrderStatus orderStatus);
+    OrderDto updateOrderStatus(String orderId, OrderStatus orderStatus);
 }

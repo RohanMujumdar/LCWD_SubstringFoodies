@@ -3,14 +3,13 @@ package com.substring.foodies.service;
 import com.substring.foodies.dto.AddItemToCartRequest;
 import com.substring.foodies.dto.CartDto;
 import com.substring.foodies.dto.CartItemsDto;
-import com.substring.foodies.entity.Cart;
-import com.substring.foodies.entity.CartItems;
-import com.substring.foodies.entity.FoodItems;
-import com.substring.foodies.entity.User;
+import com.substring.foodies.entity.*;
 import com.substring.foodies.exception.BadItemRequestException;
+import com.substring.foodies.exception.FoodItemUnavailableException;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.CartRepository;
 import com.substring.foodies.repository.FoodItemRepository;
+import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +30,23 @@ public class CartServiceImpl implements CartService{
     private FoodItemRepository foodItemRepository;
 
     @Autowired
+    private RestaurantRepository restaurantRepository;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Override
     public CartDto addItemToCart(AddItemToCartRequest addItemToCartRequest) {
 
+        if (addItemToCartRequest.getQuantity() <= 0) {
+            throw new BadItemRequestException("Quantity must be greater than zero");
+        }
+
         String userId = addItemToCartRequest.getUserId();
-        Long foodItemId = addItemToCartRequest.getFoodItemId();
+        String foodItemId = addItemToCartRequest.getFoodItemId();
+        String restoId = addItemToCartRequest.getRestoId();
+
+        Restaurant restaurant = restaurantRepository.findById(restoId).orElseThrow(() -> new ResourceNotFound(String.format("Restaurant not found with id = %s", restoId)));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFound(String.format("User not found with id = %s", userId)));
@@ -45,31 +54,34 @@ public class CartServiceImpl implements CartService{
         FoodItems foodItem = foodItemRepository.findById(foodItemId)
                 .orElseThrow(() -> new ResourceNotFound(String.format("Food item not found with id = %s", foodItemId)));
 
-        if(!foodItem.isAvailable())
-        {
-            throw new ResourceNotFound("Food Item is currently not available");
-        }
-
-
         // Get or create cart
         Cart cart = cartRepository.findByCreatorId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.builder()
                         .creator(user)
+                        .restaurant(restaurant)
                         .build()));
 
-        boolean isFoodItemFromSameRestaurant = true;
-        for(CartItems items: cart.getCartItems())
+
+        if(!cart.getRestaurant().getId().equals(restoId))
         {
-            if(!items.getFoodItems().getRestaurant().getId().equals(foodItem.getRestaurant().getId()))
-            {
-                isFoodItemFromSameRestaurant = false;
-                break;
-            }
+            throw new BadItemRequestException(
+                    "Cart already contains items from another restaurant"
+            );
         }
 
-        if(!isFoodItemFromSameRestaurant)
+
+        FoodItems restaurantFood = restaurant.getFoodItemsList()
+                                .stream()
+                                .filter(food->food.getId().equals(foodItemId))
+                                .findFirst()
+                                .orElseThrow(
+                                        ()->new ResourceNotFound("Our restaurant does not contain the food item with id = "+foodItemId)
+                                );
+
+
+        if(!restaurantFood.isAvailable())
         {
-            throw new BadItemRequestException("Only items from the same restaurant can be added to the cart. Please clear the cart and try again.");
+            throw new FoodItemUnavailableException(String.format("Food item with id = %s is currently not availble",foodItemId));
         }
 
         // Check if item already exists in cart
@@ -101,20 +113,18 @@ public class CartServiceImpl implements CartService{
 
     @Override
     public CartDto getCart(String userId) {
-
         Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound(String.format("Cart not found for userId = %s", userId)));
         return modelMapper.map(cart, CartDto.class);
-
     }
 
     @Override
-    public CartDto removeItemFromCart(int cartItemId, String userId) {
+    public CartDto removeItemFromCart(String cartItemId, String userId) {
 
         Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound(String.format("Cart not found for userId = %s", userId)));
         boolean isExisting = false;
         for (CartItems items: cart.getCartItems())
         {
-            if(cartItemId == items.getId())
+            if(cartItemId.equals(items.getId()))
             {
                 cart.getCartItems().remove(items);
                 isExisting = true;
@@ -134,12 +144,12 @@ public class CartServiceImpl implements CartService{
     }
 
     @Override
-    public CartDto reduceItemFromCart(int cartItemId, String userId) {
+    public CartDto reduceItemFromCart(String cartItemId, String userId) {
         Cart cart = cartRepository.findByCreatorId(userId).orElseThrow(()->new ResourceNotFound(String.format("Cart not found for userId = %s", userId)));
         boolean isExisting = false;
         for (CartItems items: cart.getCartItems())
         {
-            if(cartItemId == items.getId())
+            if(cartItemId.equals(items.getId()))
             {
                 items.setQuantity(items.getQuantity() - 1);
                 if(items.getQuantity() == 0)

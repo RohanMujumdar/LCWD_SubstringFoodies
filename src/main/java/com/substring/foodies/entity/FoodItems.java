@@ -8,6 +8,7 @@ import lombok.Setter;
 
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -17,8 +18,7 @@ import java.time.LocalDateTime;
 public class FoodItems {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private String id;
 
     private String name;
     private String description;
@@ -32,8 +32,14 @@ public class FoodItems {
     private LocalDateTime localDateTime;
     private int discountAmount;
 
-    @ManyToOne(cascade = CascadeType.ALL)
-    private Restaurant restaurant;
+    @ManyToMany(mappedBy = "foodItemsList")
+    private List<Restaurant> restaurants;
+
+    @ManyToOne
+    private FoodCategory foodCategory;
+
+    @ManyToOne
+    private FoodSubCategory foodSubCategory;
 
     @PrePersist
     protected void onCreate()

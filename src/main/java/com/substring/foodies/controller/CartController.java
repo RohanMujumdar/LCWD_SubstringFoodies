@@ -47,14 +47,14 @@ public class CartController {
      */
     @DeleteMapping("/{userId}/items/{itemId}")
     public ResponseEntity<CartDto> removeItemFromCart(@PathVariable String userId,
-                                                      @PathVariable int itemId) {
+                                                      @PathVariable String itemId) {
         CartDto cartDto = cartService.removeItemFromCart(itemId, userId);
         return new ResponseEntity<>(cartDto, HttpStatus.OK);
     }
 
     @DeleteMapping("/{userId}/reduce/{itemId}")
     public ResponseEntity<CartDto> reduceItemFromCart(@PathVariable String userId,
-                                                      @PathVariable int itemId) {
+                                                      @PathVariable String itemId) {
         CartDto cartDto = cartService.reduceItemFromCart(itemId, userId);
         return new ResponseEntity<>(cartDto, HttpStatus.OK);
     }
