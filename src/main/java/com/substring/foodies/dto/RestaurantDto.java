@@ -4,7 +4,9 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -17,16 +19,14 @@ public class RestaurantDto {
     private String id;
     private String name;
     private String description;
-    private List<AddressDto> addresses = new ArrayList<>();
+    private Set<AddressDto> addresses = new HashSet<>();
     private LocalTime openTime;
     private LocalTime closeTime;
     private boolean isOpen=true;
     private boolean isActive = true;
-    private LocalDateTime createdDateTime;
-
     private String ownerId;
-
     private String banner;
+    private double rating;
 
     @JsonProperty
     public String imageUrl()

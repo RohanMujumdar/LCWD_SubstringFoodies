@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface FoodCategoryRepository extends JpaRepository<FoodCategory, String> {
 
+    boolean existsByNameIgnoreCase(String name);
 }

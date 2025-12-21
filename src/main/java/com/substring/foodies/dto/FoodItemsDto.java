@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 
 @AllArgsConstructor
@@ -20,13 +21,13 @@ public class FoodItemsDto {
     private String name;
     private String description;
     private int price;
-    private boolean isAvailable;
+    private Boolean isAvailable;
     private FoodType foodType = FoodType.VEG;
     private FoodCategory foodCategory;
     private FoodSubCategory foodSubCategory;
     private String imageUrl;
-    private LocalDateTime localDateTime;
     private int discountAmount;
-    private List<RestaurantDto> restaurants;
+    private double rating;
+    private Set<RestaurantDto> restaurants;
 
 }

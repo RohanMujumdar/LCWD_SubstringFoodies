@@ -1,20 +1,24 @@
 package com.substring.foodies.entity;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "foodie_restaurant")
-@Data
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 
-public class Restaurant {
+public class Restaurant extends BaseAuditableEntity{
 
     @Id
     private String id;
@@ -29,7 +33,7 @@ public class Restaurant {
             joinColumns = @JoinColumn(name = "restaurant_id"), // this entity's FK
             inverseJoinColumns = @JoinColumn(name = "address_id") // other entity's FK
     )
-    private List<Address> addresses = new ArrayList<>();
+    private Set<Address> addresses = new HashSet<>();
 
     @Column(name = "open_time")
     private LocalTime openTime;
@@ -41,28 +45,25 @@ public class Restaurant {
 
     private boolean isActive=true;
 
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "5.0")
+    @Column(name = "rating_star")
+    private Double rating;
+
     @ManyToMany
     @JoinTable(
             name = "restaurant_food",
             joinColumns = @JoinColumn(name = "restaurant_id"),
             inverseJoinColumns = @JoinColumn(name = "food_id")
     )
-    private List<FoodItems> foodItemsList = new ArrayList<>();
+    private Set<FoodItems> foodItemsList = new HashSet<>();
 
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Cart> cartList = new ArrayList<>();
 
     private String banner;
 
-    private LocalDateTime createdDateTime;
-
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
-
-    @PrePersist
-    protected void onCreate()
-    {
-        createdDateTime = LocalDateTime.now();
-    }
 }

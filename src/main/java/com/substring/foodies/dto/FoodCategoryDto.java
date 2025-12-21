@@ -13,6 +13,6 @@ public class FoodCategoryDto {
     private String id;
     private String name;
     private String description;
-    private List<FoodItemsDto> foodItemList;
+    private List<FoodItemsDto> foodItemList = new ArrayList<>();
     private List<FoodSubCategory> foodSubCategoryList = new ArrayList<>();
 }

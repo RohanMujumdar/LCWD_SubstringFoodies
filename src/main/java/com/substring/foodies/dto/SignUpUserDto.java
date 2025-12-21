@@ -48,6 +48,5 @@ public class SignUpUserDto {
     private String phoneNumber;
     private Role role = Role.ROLE_USER;
     private boolean isAvailable=true;
-    private LocalDate createdDate;
     private boolean isEnabled=true;
 }

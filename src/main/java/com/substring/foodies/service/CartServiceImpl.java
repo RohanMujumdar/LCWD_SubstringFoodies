@@ -79,7 +79,7 @@ public class CartServiceImpl implements CartService{
                                 );
 
 
-        if(!restaurantFood.isAvailable())
+        if(!restaurantFood.getIsAvailable())
         {
             throw new FoodItemUnavailableException(String.format("Food item with id = %s is currently not availble",foodItemId));
         }

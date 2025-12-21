@@ -13,9 +13,6 @@ import java.util.List;
 @Repository
 public interface RestaurantRepository extends JpaRepository<Restaurant, String> {
 
-    List<Restaurant> findByisActive(boolean isActive);
-    List<Restaurant> findByIsOpen(boolean isOpen);
-    List<Restaurant> findByIsOpenAndIsActive(boolean isActive, boolean isOpen);
     List<Restaurant> findByOwnerId(String ownerId);
 
     @Query(value = "SELECT * FROM foodie_restaurant WHERE is_Open = true", nativeQuery = true)
@@ -23,6 +20,5 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, String> 
 
     List<Restaurant> findByNameContainingIgnoreCase(String pattern);
 
-
-
+    Page<Restaurant> findByFoodItemsList_Id(String foodId, Pageable pageable);
 }

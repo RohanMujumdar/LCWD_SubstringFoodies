@@ -3,7 +3,6 @@ package com.substring.foodies.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -13,15 +12,13 @@ import java.util.List;
 @Entity
 @Data
 @Builder
-public class Cart {
+public class Cart extends BaseAuditableEntity{
 
     @Id
     private String id;
 
     @ManyToOne
     private Restaurant restaurant;
-
-    private LocalDateTime createdAt;
 
     @OneToOne
     @JoinColumn(name = "user_id")
@@ -30,9 +27,4 @@ public class Cart {
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CartItems> cartItems;
 
-    @PrePersist
-    protected void onCreate()
-    {
-        createdAt = LocalDateTime.now();
-    }
 }

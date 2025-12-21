@@ -1,21 +1,20 @@
 package com.substring.foodies.entity;
 import com.substring.foodies.dto.enums.FoodType;
 import jakarta.persistence.*;
-import lombok.Data;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
-import java.time.LocalDateTime;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
-@Data
-public class FoodItems {
+public class FoodItems extends BaseAuditableEntity{
 
     @Id
     private String id;
@@ -23,29 +22,28 @@ public class FoodItems {
     private String name;
     private String description;
     private int price;
-    private boolean isAvailable;
+    private Boolean isAvailable;
 
     @Enumerated(EnumType.STRING)
     private FoodType foodType = FoodType.VEG;
 
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "5.0")
+    @Column(name = "rating_star")
+    private Double rating;
+
     private String imageUrl;
-    private LocalDateTime localDateTime;
+
     private int discountAmount;
 
     @ManyToMany(mappedBy = "foodItemsList")
-    private List<Restaurant> restaurants;
+    private Set<Restaurant> restaurants = new HashSet<>();
 
     @ManyToOne
     private FoodCategory foodCategory;
 
     @ManyToOne
     private FoodSubCategory foodSubCategory;
-
-    @PrePersist
-    protected void onCreate()
-    {
-        localDateTime = LocalDateTime.now();
-    }
 
     public int actualPrice()
     {

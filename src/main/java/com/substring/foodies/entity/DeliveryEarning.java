@@ -1,6 +1,5 @@
 package com.substring.foodies.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;

@@ -114,10 +114,7 @@ public class UserServiceImpl implements UserService{
     public SignUpUserDto signUpUser(SignUpUserDto signUpUserDto) {
 
         User savedUser = modelMapper.map(signUpUserDto, User.class);
-        Address address = savedUser.getAddress();
-
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
-        address.setUser(savedUser);
 
         return modelMapper.map(userRepository.save(savedUser), SignUpUserDto.class);
     }

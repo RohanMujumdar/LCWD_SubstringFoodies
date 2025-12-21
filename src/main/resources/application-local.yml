@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: lcwd_substringFoodies
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/lcwd_food_delivery_app
+    username: root
+    password: Restinpeace11.
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  security:
+    user:
+      name: user
+      password: user
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+
+razorpay:
+  key_id: rzp_test_gSTSCaNRmkjT5L
+  key_secret: 3IVGEg5yBOaR67BlrPVa5nvj
+
+jwt:
+  secret: sdfasdvsdagbfkjadfkjsgksdfgjkgjkg
+
+restaurant:
+  file:
+    path: uploads/restaurant_banner/
+
+server:
+  port: 8062

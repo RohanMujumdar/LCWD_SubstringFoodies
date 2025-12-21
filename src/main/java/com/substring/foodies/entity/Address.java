@@ -2,14 +2,17 @@ package com.substring.foodies.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Address {
+public class Address extends BaseAuditableEntity{
 
     @Id
     private String id;
@@ -25,5 +28,5 @@ public class Address {
     private User user;
 
     @ManyToMany(mappedBy = "addresses")
-    private List<Restaurant> restaurants = new ArrayList<>();
+    private Set<Restaurant> restaurants = new HashSet<>();
 }

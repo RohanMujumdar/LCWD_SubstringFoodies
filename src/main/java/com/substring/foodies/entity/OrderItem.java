@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Data
-public class OrderItem {
+public class OrderItem extends BaseAuditableEntity{
 
     @Id
     private String id;

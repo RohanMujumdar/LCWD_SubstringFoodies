@@ -19,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @Data
 @Table(name = "food_Orders")
-public class Order {
+public class Order extends BaseAuditableEntity{
 
     @Id
     private String id;

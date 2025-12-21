@@ -12,7 +12,7 @@ import java.util.List;
 @Table(name="foodie_users")
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class User extends BaseAuditableEntity{
 
     @Id
     private String id;
@@ -39,19 +39,10 @@ public class User {
     @OneToMany(mappedBy = "owner", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Restaurant> restaurantList=new ArrayList<>();
 
-    private LocalDate createdDate;
-
     private boolean isEnabled=true;
 
     private String gender;
 
     @OneToOne(mappedBy = "creator", cascade = CascadeType.ALL)
     private Cart cart;
-
-    @PrePersist
-    protected void onCreate()
-    {
-        createdDate = LocalDate.now();
-    }
-
 }

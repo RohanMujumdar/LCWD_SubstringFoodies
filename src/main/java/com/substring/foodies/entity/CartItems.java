@@ -8,7 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @Data
-public class CartItems {
+public class CartItems extends BaseAuditableEntity{
 
     @Id
     private String id;

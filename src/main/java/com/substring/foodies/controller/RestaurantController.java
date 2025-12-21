@@ -47,6 +47,7 @@ public class RestaurantController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<RestaurantDto> getRestaurantById(@PathVariable String id)
     {
         RestaurantDto restaurantDto=restaurantService.getRestaurantById(id);
@@ -54,6 +55,7 @@ public class RestaurantController {
     }
 
     @GetMapping("/owner/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<List<RestaurantDto>> getRestaurantByOwner(@PathVariable String id)
     {
         List<RestaurantDto> restaurantDtoList=restaurantService.getByOwner(id);
@@ -61,26 +63,38 @@ public class RestaurantController {
     }
 
 
-
     @GetMapping("/")
     public ResponseEntity<Page<RestaurantDto>> getAllRestaurants(@RequestParam(value="page", required = false, defaultValue = "0") int page,
                                                                  @RequestParam(value="size", required = false, defaultValue = "6") int size,
-                                                                 @RequestParam(value="sortBy", required = false, defaultValue = "id") String sortBy,
-                                                                 @RequestParam(value="sortDir", required = false, defaultValue = "asc") String sortDir)
+                                                                 @RequestParam(value="sortBy", required = false, defaultValue = "rating_star") String sortBy,
+                                                                 @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir)
     {
         Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
         Pageable pageable= PageRequest.of(page, size, sort);
 
         Page<RestaurantDto> restaurantDtoList=restaurantService.getAllRestaurants(pageable);
+        return new ResponseEntity<>(restaurantDtoList, HttpStatus.OK);
+    }
 
+    @GetMapping("/food/{id}")
+    public ResponseEntity<Page<RestaurantDto>> getRestaurantsByFood(@RequestParam(value="page", required = false, defaultValue = "0") int page,
+                                                                    @RequestParam(value="size", required = false, defaultValue = "6") int size,
+                                                                    @RequestParam(value="sortBy", required = false, defaultValue = "rating_star") String sortBy,
+                                                                    @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir,
+                                                                    @PathVariable String id)
+    {
+        Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+        Pageable pageable= PageRequest.of(page, size, sort);
+
+        Page<RestaurantDto> restaurantDtoList=restaurantService.findByFoodItemsList_Id(id, pageable);
         return new ResponseEntity<>(restaurantDtoList, HttpStatus.OK);
     }
 
     @GetMapping("/open")
     public ResponseEntity<Page<RestaurantDto>> getAllOpenRestaurants(@RequestParam(value="page", required = false, defaultValue = "0") int page,
                                                                      @RequestParam(value="size", required = false, defaultValue = "2") int size,
-                                                                     @RequestParam(value="sortBy", required = false, defaultValue = "id") String sortBy,
-                                                                     @RequestParam(value="sortDir", required = false, defaultValue = "asc") String sortDir)
+                                                                     @RequestParam(value="sortBy", required = false, defaultValue = "rating_star") String sortBy,
+                                                                     @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir)
 
     {
         Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
@@ -93,17 +107,17 @@ public class RestaurantController {
     @GetMapping("/searchByName")
     public ResponseEntity<List<RestaurantDto>> searchRestaurantsByName(@RequestParam(value="name") String name)
     {
-        List<RestaurantDto> restaurants = restaurantService.findByNameLikeRestaurants(name);
+        List<RestaurantDto> restaurants = restaurantService.findByNameContainingIgnoreCase(name);
 
         return new ResponseEntity<>(restaurants, HttpStatus.OK);
     }
 
-    @GetMapping("/currentlyOpen")
-    public ResponseEntity<List<RestaurantDto>> findCurrentOpenRestaurants(@RequestParam(value = "open", required = false, defaultValue = "true") boolean isActive,
-                                                                          @RequestParam(value = "active", required = false, defaultValue = "true") boolean isOpen)
+    @GetMapping("/name")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
+    public ResponseEntity<List<RestaurantDto>> findRestaurantsByName(@RequestParam(value="name") String name)
     {
-        List<RestaurantDto> currentOpenRestaurants = restaurantService.findCurrentOpenAndActiveRestaurants(isActive, isOpen);
-        return new ResponseEntity<>(currentOpenRestaurants, HttpStatus.OK);
+        List<RestaurantDto> restaurants = restaurantService.findRestaurantByName(name);
+        return new ResponseEntity<>(restaurants, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
@@ -143,6 +157,7 @@ public class RestaurantController {
         String fullPath=path+fileName;
         restaurantService.deleteBanner(fullPath);
     }
+
 
     @GetMapping("/{restaurantId}/banner")
     public ResponseEntity<Resource> serveFile(@PathVariable String restaurantId) throws IOException

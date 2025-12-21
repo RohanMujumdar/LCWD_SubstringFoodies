@@ -6,14 +6,13 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "food_category")
-public class FoodCategory {
+public class FoodCategory extends BaseAuditableEntity{
 
     @Id
     private String id;

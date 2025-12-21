@@ -4,10 +4,12 @@ import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.dto.FileData;
 import com.substring.foodies.dto.RestaurantDto;
 import com.substring.foodies.entity.Address;
+import com.substring.foodies.entity.FoodItems;
 import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.entity.User;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.AddressRepository;
+import com.substring.foodies.repository.FoodItemRepository;
 import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.repository.UserRepository;
 import org.modelmapper.ModelMapper;
@@ -48,6 +50,9 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private FoodItemRepository foodItemRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -155,10 +160,14 @@ public class RestaurantServiceImpl implements RestaurantService{
     }
 
     @Override
-    public List<RestaurantDto> findRestaurantByIsActive(Boolean isActive) {
-        return List.of();
-    }
+    public Page<RestaurantDto> findByFoodItemsList_Id(String foodId, Pageable pageable) {
 
+        Page<Restaurant> restaurantList =
+                restaurantRepository.findByFoodItemsList_Id(foodId, pageable);
+
+        return restaurantList
+                .map(resto -> modelMapper.map(resto, RestaurantDto.class));
+    }
 
     @Override
     public RestaurantDto getRestaurantById(String id) {
@@ -180,14 +189,9 @@ public class RestaurantServiceImpl implements RestaurantService{
     }
 
     @Override
-    public List<RestaurantDto> findByNameLikeRestaurants(String pattern) {
+    public List<RestaurantDto> findByNameContainingIgnoreCase(String pattern) {
         List<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(pattern);
         return restaurants.stream().map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class)).collect(toList());
-    }
-
-    @Override
-    public List<RestaurantDto> findCurrentOpenAndActiveRestaurants(boolean isActive, boolean isOpen) {
-        return restaurantRepository.findByIsOpenAndIsActive(isActive, isOpen).stream().map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class)).collect(toList());
     }
 
     @Override

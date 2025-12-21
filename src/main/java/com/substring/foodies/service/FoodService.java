@@ -1,7 +1,7 @@
 package com.substring.foodies.service;
 
+import com.substring.foodies.dto.FoodCategoryDto;
 import com.substring.foodies.dto.FoodItemsDto;
-import com.substring.foodies.entity.FoodItems;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,11 +13,13 @@ public interface FoodService {
 
     FoodItemsDto updateFood(FoodItemsDto foodItemsDto, String id);
 
+    FoodItemsDto patchFood(String id, FoodItemsDto patchDto);
+
     void deleteFood(String id);
 
     Page<FoodItemsDto> getAllFoodItems(Pageable pageable);
 
-    List<FoodItemsDto> getFoodByRestaurant(String restoId);
+    List<FoodCategoryDto> getFoodByRestaurant(String restoId);
 
     List<FoodItemsDto> findByRestaurantIdAndFoodCategory(String restoId, String foodCategory);
 
@@ -36,4 +38,10 @@ public interface FoodService {
     List<FoodItemsDto> findByRestaurantIdAndFoodName(String restoId, String foodName);
 
     FoodItemsDto getFoodById(String foodId);
+
+    void addRestoForFood(String foodId, List<String> restoIds);
+
+    void deleteRestoForFood(String foodId, List<String> restoIds);
+
+    void updateFoodRating(String foodId, double rating);
 }
