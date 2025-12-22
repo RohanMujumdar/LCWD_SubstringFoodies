@@ -1,6 +1,6 @@
 package com.substring.foodies.controller;
 
-import com.substring.foodies.entity.Address;
+import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.service.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,39 +17,46 @@ public class AddressController {
 
     // CREATE
     @PostMapping
-    public ResponseEntity<Address> createAddress(@RequestBody Address address) {
-        Address createdAddress = addressService.createAddress(address);
-        return ResponseEntity.ok(createdAddress);
+    public ResponseEntity<AddressDto> createAddress(
+            @RequestBody AddressDto addressDto) {
+
+        AddressDto createdAddress = addressService.createAddress(addressDto);
+        return ResponseEntity.status(201).body(createdAddress);
     }
 
     // READ single
     @GetMapping("/{id}")
-    public ResponseEntity<Address> getAddressById(@PathVariable String id) {
-        Address address = addressService.getAddressById(id);
+    public ResponseEntity<AddressDto> getAddressById(@PathVariable String id) {
+        AddressDto address = addressService.getAddressById(id);
         return ResponseEntity.ok(address);
     }
 
     // READ all
     @GetMapping
-    public ResponseEntity<List<Address>> getAllAddresses() {
-        List<Address> addresses = addressService.getAllAddresses();
+    public ResponseEntity<List<AddressDto>> getAllAddresses() {
+        List<AddressDto> addresses = addressService.getAllAddresses();
         return ResponseEntity.ok(addresses);
     }
 
-    // UPDATE
+    // UPDATE (full replace)
     @PutMapping("/{id}")
-    public ResponseEntity<Address> updateAddress(@PathVariable String id, @RequestBody Address address) {
-        Address updatedAddress = addressService.updateAddress(id, address);
+    public ResponseEntity<AddressDto> updateAddress(
+            @PathVariable String id,
+            @RequestBody AddressDto addressDto) {
+
+        AddressDto updatedAddress = addressService.updateAddress(id, addressDto);
         return ResponseEntity.ok(updatedAddress);
     }
 
-    // PATCH
+    // PATCH (partial update)
     @PatchMapping("/{id}")
-    public ResponseEntity<Address> patchAddress(@PathVariable String id, @RequestBody Address patch) {
-        Address updated = addressService.patchAddress(id, patch);
-        return ResponseEntity.ok(updated);
-    }
+    public ResponseEntity<AddressDto> patchAddress(
+            @PathVariable String id,
+            @RequestBody AddressDto patchDto) {
 
+        AddressDto updatedAddress = addressService.patchAddress(id, patchDto);
+        return ResponseEntity.ok(updatedAddress);
+    }
 
     // DELETE
     @DeleteMapping("/{id}")

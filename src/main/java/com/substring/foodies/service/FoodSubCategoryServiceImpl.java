@@ -53,8 +53,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
             );
         }
 
-        FoodSubCategory subCategory = new FoodSubCategory();
-        subCategory.setName(dto.getName());
+        FoodSubCategory subCategory = modelMapper.map(dto, FoodSubCategory.class);
         subCategory.setFoodCategory(category);
 
         return modelMapper.map(

@@ -21,7 +21,6 @@ public class FoodSubCategory extends BaseAuditableEntity{
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", nullable = false)
     private FoodCategory foodCategory;
 
     @OneToMany(

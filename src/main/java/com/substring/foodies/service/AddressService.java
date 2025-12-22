@@ -1,21 +1,22 @@
 package com.substring.foodies.service;
 
+import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.entity.Address;
 
 import java.util.List;
 
 public interface AddressService {
 
-    Address createAddress(Address address);
+    AddressDto createAddress(AddressDto address);
 
-    Address getAddressById(String id);
+    AddressDto getAddressById(String id);
 
-    List<Address> getAllAddresses();
+    List<AddressDto> getAllAddresses();
 
-    Address updateAddress(String id, Address address);
+    AddressDto updateAddress(String id, AddressDto address);
 
     void deleteAddress(String id);
 
-    Address patchAddress(String id, Address patch);
+    AddressDto patchAddress(String id, AddressDto patch);
 
 }

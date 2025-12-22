@@ -1,66 +1,96 @@
 package com.substring.foodies.service;
 
+import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.entity.Address;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.AddressRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-public class AddressServiceImpl implements AddressService{
+public class AddressServiceImpl implements AddressService {
 
     @Autowired
     private AddressRepository addressRepository;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @Override
-    public Address createAddress(Address address) {
-        return addressRepository.save(address);
+    public AddressDto createAddress(AddressDto addressDto) {
+        Address address = modelMapper.map(addressDto, Address.class);
+        Address saved = addressRepository.save(address);
+        return modelMapper.map(saved, AddressDto.class);
     }
 
     @Override
-    public Address getAddressById(String id) {
-        return addressRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Address not found with id = " + id));
+    public AddressDto getAddressById(String id) {
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Address not found with id = " + id));
+
+        return modelMapper.map(address, AddressDto.class);
     }
 
     @Override
-    public List<Address> getAllAddresses() {
-        return addressRepository.findAll();
+    public List<AddressDto> getAllAddresses() {
+        return addressRepository.findAll()
+                .stream()
+                .map(address -> modelMapper.map(address, AddressDto.class))
+                .toList();
     }
 
     @Override
-    public Address updateAddress(String id, Address address) {
+    public AddressDto updateAddress(String id, AddressDto addressDto) {
 
-        Address existingAddress = getAddressById(id);
+        Address existingAddress = addressRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Address not found with id = " + id));
 
-        existingAddress.setAddressLine(address.getAddressLine());
-        existingAddress.setCity(address.getCity());
-        existingAddress.setState(address.getState());
-        existingAddress.setPincode(address.getPincode());
-        existingAddress.setCountry(address.getCountry());
+        existingAddress.setAddressLine(addressDto.getAddressLine());
+        existingAddress.setCity(addressDto.getCity());
+        existingAddress.setState(addressDto.getState());
+        existingAddress.setPincode(addressDto.getPincode());
+        existingAddress.setCountry(addressDto.getCountry());
 
-        return addressRepository.save(existingAddress);
+        Address updated = addressRepository.save(existingAddress);
+        return modelMapper.map(updated, AddressDto.class);
     }
 
     @Override
-    public Address patchAddress(String id, Address patch) {
-        Address existingAddress = getAddressById(id); // fetch existing
+    public AddressDto patchAddress(String id, AddressDto patchDto) {
 
-        if (patch.getAddressLine() != null) existingAddress.setAddressLine(patch.getAddressLine());
-        if (patch.getCity() != null) existingAddress.setCity(patch.getCity());
-        if (patch.getState() != null) existingAddress.setState(patch.getState());
-        if (patch.getPincode() != null) existingAddress.setPincode(patch.getPincode());
-        if (patch.getCountry() != null) existingAddress.setCountry(patch.getCountry());
+        Address existingAddress = addressRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Address not found with id = " + id));
 
-        Address updateAddress = addressRepository.save(existingAddress);
-        return updateAddress;
+        if (patchDto.getAddressLine() != null)
+            existingAddress.setAddressLine(patchDto.getAddressLine());
+
+        if (patchDto.getCity() != null)
+            existingAddress.setCity(patchDto.getCity());
+
+        if (patchDto.getState() != null)
+            existingAddress.setState(patchDto.getState());
+
+        if (patchDto.getPincode() != null)
+            existingAddress.setPincode(patchDto.getPincode());
+
+        if (patchDto.getCountry() != null)
+            existingAddress.setCountry(patchDto.getCountry());
+
+        Address updated = addressRepository.save(existingAddress);
+        return modelMapper.map(updated, AddressDto.class);
     }
 
     @Override
     public void deleteAddress(String id) {
-        Address address = getAddressById(id);
-        addressRepository.delete(address);
+        if (!addressRepository.existsById(id)) {
+            throw new ResourceNotFound("Address not found with id = " + id);
+        }
+        addressRepository.deleteById(id);
     }
 }
