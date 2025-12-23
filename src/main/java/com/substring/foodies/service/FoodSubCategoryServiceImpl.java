@@ -34,15 +34,15 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
             throw new BadRequestException("Sub-category name is required");
         }
 
-        if (dto.getCategory() == null || dto.getCategory().getId() == null) {
+        if (dto.getFoodCategoryId() == null || dto.getFoodCategoryId() == null) {
             throw new BadRequestException("Food category is required");
         }
 
         FoodCategory category = foodCategoryRepository
-                .findById(dto.getCategory().getId())
+                .findById(dto.getFoodCategoryId())
                 .orElseThrow(() ->
                         new ResourceNotFound("Food category not found with id = " +
-                                dto.getCategory().getId())
+                                dto.getFoodCategoryId())
                 );
 
         if (foodSubCategoryRepository.existsByNameIgnoreCaseAndFoodCategoryId(
@@ -86,7 +86,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
             throw new BadRequestException("Sub-category name is required");
         }
 
-        if (dto.getCategory() == null || dto.getCategory().getId() == null) {
+        if (dto.getFoodCategoryId() == null) {
             throw new BadRequestException("Food category is required");
         }
 
@@ -96,7 +96,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
                 );
 
         String newName = dto.getName();
-        String categoryId = dto.getCategory().getId();
+        String categoryId = dto.getFoodCategoryId();
 
         // uniqueness check (exclude same entity)
         if (!subCategory.getName().equalsIgnoreCase(newName) &&
@@ -149,14 +149,14 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
         }
 
         // patch category
-        if (dto.getCategory() != null && dto.getCategory().getId() != null) {
+        if (dto.getFoodCategoryId() != null) {
 
             FoodCategory category = foodCategoryRepository
-                    .findById(dto.getCategory().getId())
+                    .findById(dto.getFoodCategoryId())
                     .orElseThrow(() ->
                             new ResourceNotFound(
                                     "Category not found with id = " +
-                                            dto.getCategory().getId())
+                                            dto.getFoodCategoryId())
                     );
 
             subCategory.setFoodCategory(category);
