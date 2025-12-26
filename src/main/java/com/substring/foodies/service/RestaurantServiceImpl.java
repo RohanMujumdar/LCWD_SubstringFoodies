@@ -197,7 +197,7 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Override
     public RestaurantDto uploadBanner(MultipartFile file, String id) throws IOException {
 
-        Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound());
+        Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound("Restaurant not found with id = "+id));
 
         String fileName=file.getOriginalFilename();
         String fileExtension=fileName.substring(fileName.lastIndexOf('.'));

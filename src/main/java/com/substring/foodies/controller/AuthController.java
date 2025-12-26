@@ -96,7 +96,7 @@ public class AuthController {
 
 
     @PostMapping("/signUp")
-    public ResponseEntity<?> signUp(@Valid @RequestBody SignUpUserDto signUpUserDto) {
+    public ResponseEntity<?> signUp(@Valid @RequestBody UserDto signUpUserDto) {
 
         if (!signUpUserDto.getPassword().equals(signUpUserDto.getConfirmPassword())) {
             ErrorResponse response = ErrorResponse.builder()
@@ -107,7 +107,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(response);  // fixed this too
         }
 
-        SignUpUserDto user = userService.signUpUser(signUpUserDto);
+        UserDto user = userService.signUpUser(signUpUserDto);
         return ResponseEntity.ok(user);  // returning the created user, not the request again
     }
 

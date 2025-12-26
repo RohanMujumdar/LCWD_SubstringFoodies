@@ -26,7 +26,7 @@ public class User extends BaseAuditableEntity{
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL)
     private Address address;
 
     private String phoneNumber;

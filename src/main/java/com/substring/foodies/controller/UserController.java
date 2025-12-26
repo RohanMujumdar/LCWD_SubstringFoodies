@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -53,6 +55,15 @@ public class UserController {
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<UserDto>> getUsersByName(
+            @RequestParam("name") String name
+    ) {
+        List<UserDto> users = userService.getUserByName(name);
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+
     @PutMapping("/update/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> updateUserById(@PathVariable String id, @RequestBody UserDto userDto)
@@ -67,6 +78,15 @@ public class UserController {
         }
         UserDto user = userService.updateUser(id, userDto);
         return new ResponseEntity<>(user, HttpStatus.OK);
+    }
+
+    @PatchMapping("/patch/{id}")
+    public ResponseEntity<UserDto> patchUser(
+            @PathVariable String id,
+            @RequestBody UserDto userDto
+    ) {
+        UserDto updatedUser = userService.patchUser(id, userDto);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/deleteMyAccount/{id}")

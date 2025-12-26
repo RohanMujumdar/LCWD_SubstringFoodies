@@ -1,9 +1,7 @@
 package com.substring.foodies.service;
 
 
-import com.substring.foodies.dto.SignUpUserDto;
 import com.substring.foodies.dto.UserDto;
-import com.substring.foodies.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -22,8 +20,7 @@ public interface UserService {
     List<UserDto> getUserByName(String userName);
     UserDto getUserByEmail(String userEmail);
     UserDto getUserById (String userId);
+    UserDto patchUser(String userId, UserDto patchDto);
     void deleteUser(String userId);
-
-    SignUpUserDto signUpUser(SignUpUserDto signUpUserDto);
-    List<UserDto> searchUserName(String keyword);
+    UserDto signUpUser(UserDto signUpUserDto);
 }

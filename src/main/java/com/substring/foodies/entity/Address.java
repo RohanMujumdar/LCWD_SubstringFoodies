@@ -24,7 +24,7 @@ public class Address extends BaseAuditableEntity{
     private String pincode;
     private String country;
 
-    @OneToOne
+    @OneToOne(mappedBy = "address")
     private User user;
 
     @ManyToMany(mappedBy = "addresses")
