@@ -1,5 +1,7 @@
 package com.substring.foodies.controller;
 
+import com.substring.foodies.dto.ChangePasswordDto;
+import com.substring.foodies.dto.ChangeRoleDto;
 import com.substring.foodies.dto.ErrorResponse;
 import com.substring.foodies.dto.UserDto;
 import com.substring.foodies.service.UserService;
@@ -65,7 +67,6 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}")
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> updateUserById(@PathVariable String id, @RequestBody UserDto userDto)
     {
         if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
@@ -87,6 +88,14 @@ public class UserController {
     ) {
         UserDto updatedUser = userService.patchUser(id, userDto);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PatchMapping("/{id}/role-change")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> changeRole(@PathVariable String id, @RequestBody ChangeRoleDto dto)
+    {
+        userService.changeUserRole(id, dto);
+        return new ResponseEntity<>("Role changed successfully", HttpStatus.OK);
     }
 
     @DeleteMapping("/deleteMyAccount/{id}")

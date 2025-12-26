@@ -111,6 +111,12 @@ public class AuthController {
         return ResponseEntity.ok(user);  // returning the created user, not the request again
     }
 
+    @PutMapping("/{id}/change-password")
+    public ResponseEntity<?> changePassword(@PathVariable String id, @RequestBody  ChangePasswordDto dto) {
+        userService.changePassword(id, dto);
+        return new ResponseEntity<>("Password changed successfully.", HttpStatus.OK);
+    }
+
 
     // Exception handling method: for this controller.
     // These below methods are Local Exception Handlers.

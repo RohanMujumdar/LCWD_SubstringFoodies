@@ -32,7 +32,7 @@ public class User extends BaseAuditableEntity{
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Role role = Role.ROLE_USER;
 
     private boolean isAvailable=true;
 

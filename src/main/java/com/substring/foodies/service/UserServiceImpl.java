@@ -3,9 +3,13 @@ package com.substring.foodies.service;
 import com.substring.foodies.controller.AuthController;
 import com.substring.foodies.converter.Converter;
 import com.substring.foodies.dto.AddressDto;
+import com.substring.foodies.dto.ChangePasswordDto;
+import com.substring.foodies.dto.ChangeRoleDto;
 import com.substring.foodies.dto.UserDto;
+import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.Address;
 import com.substring.foodies.entity.User;
+import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.repository.UserRepository;
@@ -15,6 +19,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -42,35 +48,65 @@ public class UserServiceImpl implements UserService {
 
     private Logger logger= LoggerFactory.getLogger(AuthController.class);
 
-    public UserDto updateUser(String userId, UserDto userDto)
-    {
+    private User getLoggedInUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AccessDeniedException("Invalid session"));
+    }
+
+
+    public UserDto updateUser(String userId, UserDto userDto) {
+
         User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFound(String.format("User not found with id = %s", userId)));
+                .orElseThrow(() ->
+                        new ResourceNotFound("User not found with id = " + userId));
 
-        // Update the fields (excluding ID, createdDate, and associations unless needed)
+        User loggedInUser = getLoggedInUser();
+
+        if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
+                !loggedInUser.getId().equals(userId)) {
+
+            throw new AccessDeniedException(
+                    "You can update only your own profile"
+            );
+        }
+
+        // ✅ Allowed profile fields only
         existingUser.setName(userDto.getName());
-        existingUser.setEmail(userDto.getEmail());
-        existingUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
         existingUser.setPhoneNumber(userDto.getPhoneNumber());
-        existingUser.setRole(userDto.getRole());
-        existingUser.setAvailable(userDto.isAvailable());
-        existingUser.setEnabled(userDto.isEnabled());
+        existingUser.setGender(userDto.getGender());
 
-        AddressDto addressDto = userDto.getAddress();
-        existingUser.setAddress(modelMapper.map(addressDto, Address.class));
-        existingUser.getAddress().setUser(existingUser);
-        // Save updated user
+        // ✅ Address update (NO addressId)
+        if (userDto.getAddress() != null) {
+            Address address = existingUser.getAddress();
+            if (address == null) {
+                address = new Address();
+                address.setUser(existingUser);
+            }
+
+            AddressDto a = userDto.getAddress();
+            address.setAddressLine(a.getAddressLine());
+            address.setCity(a.getCity());
+            address.setState(a.getState());
+            address.setPincode(a.getPincode());
+            address.setCountry(a.getCountry());
+
+            existingUser.setAddress(address);
+        }
+
         User updatedUser = userRepository.save(existingUser);
-
-        // Convert back to DTO and return
         return modelMapper.map(updatedUser, UserDto.class);
     }
+
 
     @Override
     public UserDto savedUser(UserDto userDto) {
 
-        User savedUser = new User();
-        savedUser=converter.dtoToEntity(userDto);
+        User savedUser = converter.dtoToEntity(userDto);
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
 
         userRepository.save(savedUser);
@@ -104,13 +140,25 @@ public class UserServiceImpl implements UserService {
         return userDto;
     }
 
-    @Override
     public void deleteUser(String userId) {
 
-        userRepository.findById(userId).orElseThrow(()->new ResourceNotFound(String.format("User not found with id = %s", userId)));
-        userRepository.deleteById(userId);
+        User loggedInUser = getLoggedInUser();
 
+        if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
+                !loggedInUser.getId().equals(userId)) {
+
+            throw new AccessDeniedException(
+                    "You can delete only your own account"
+            );
+        }
+
+        userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("User not found with id = " + userId));
+
+        userRepository.deleteById(userId);
     }
+
 
     @Override
     public UserDto signUpUser(UserDto signUpUserDto) {
@@ -121,35 +169,34 @@ public class UserServiceImpl implements UserService {
         return modelMapper.map(userRepository.save(savedUser), UserDto.class);
     }
 
-    @Override
     public UserDto patchUser(String userId, UserDto patchDto) {
 
+        User loggedInUser = getLoggedInUser();
         User user = userRepository.findById(userId)
                 .orElseThrow(() ->
-                        new ResourceNotFound("User not found with id = " + userId)
-                );
+                        new ResourceNotFound("User not found with id = " + userId));
 
-        // name
+        if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
+                !loggedInUser.getId().equals(userId)) {
+
+            throw new AccessDeniedException(
+                    "You can patch only your own profile"
+            );
+        }
+
         if (patchDto.getName() != null) {
             user.setName(patchDto.getName());
         }
 
-        // phone
         if (patchDto.getPhoneNumber() != null) {
             user.setPhoneNumber(patchDto.getPhoneNumber());
         }
 
-        // gender
         if (patchDto.getGender() != null) {
             user.setGender(patchDto.getGender());
         }
 
-        // role (ONLY allow from ADMIN in controller)
-        if (patchDto.getRole() != null) {
-            user.setRole(patchDto.getRole());
-        }
-
-        // address patch (optional but clean)
+        // Address patch (NO addressId)
         if (patchDto.getAddress() != null) {
             Address address = user.getAddress();
             if (address == null) {
@@ -157,18 +204,65 @@ public class UserServiceImpl implements UserService {
                 address.setUser(user);
             }
 
-            AddressDto addr = patchDto.getAddress();
-            if (addr.getId() != null) address.setId(addr.getId());
-            if (addr.getAddressLine() != null) address.setAddressLine(addr.getAddressLine());
-            if (addr.getCity() != null) address.setCity(addr.getCity());
-            if (addr.getState() != null) address.setState(addr.getState());
-            if (addr.getPincode() != null) address.setPincode(addr.getPincode());
-            if (addr.getCountry() != null) address.setCountry(addr.getCountry());
+            AddressDto a = patchDto.getAddress();
+            if (a.getAddressLine() != null) address.setAddressLine(a.getAddressLine());
+            if (a.getCity() != null) address.setCity(a.getCity());
+            if (a.getState() != null) address.setState(a.getState());
+            if (a.getPincode() != null) address.setPincode(a.getPincode());
+            if (a.getCountry() != null) address.setCountry(a.getCountry());
 
             user.setAddress(address);
         }
 
-        User saved = userRepository.save(user);
-        return modelMapper.map(saved, UserDto.class);
+        return modelMapper.map(userRepository.save(user), UserDto.class);
     }
+
+
+    public void changeUserRole(String userId, ChangeRoleDto dto) {
+
+        User admin = getLoggedInUser();
+
+        if (admin.getRole() != Role.ROLE_ADMIN) {
+            throw new AccessDeniedException("Admin access required");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("User not found with id = " + userId));
+
+        if (user.getRole() == Role.ROLE_ADMIN) {
+            throw new AccessDeniedException("Cannot modify another admin");
+        }
+
+        user.setRole(dto.getRole());
+        userRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(String userId, ChangePasswordDto dto) {
+
+        User user = userRepository.findById(userId)
+                        .orElseThrow(()->new ResourceNotFound("User not found with = "+userId));
+
+        User loggedInUser = getLoggedInUser();
+
+        if (!loggedInUser.getId().equals(userId)) {
+            throw new AccessDeniedException(
+                    "You can change only your own password."
+            );
+        }
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new AccessDeniedException("Old password is incorrect.");
+        }
+
+
+        if(!dto.getNewPassword().equals(dto.getConfirmPassword()))
+        {
+            throw new BadRequestException("Password and Confirm Password must match.");
+        }
+        user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+    }
+
 }

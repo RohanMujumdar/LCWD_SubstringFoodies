@@ -40,7 +40,7 @@ public class UserDto {
 
     private AddressDto address;
     private String phoneNumber;
-    private Role role = Role.ROLE_USER;
+    private Role role;
     private boolean isAvailable=true;
     private boolean isEnabled=true;
 }
