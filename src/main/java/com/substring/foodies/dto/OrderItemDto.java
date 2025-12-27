@@ -1,7 +1,5 @@
 package com.substring.foodies.dto;
 
-import com.substring.foodies.entity.FoodItems;
-import com.substring.foodies.entity.Order;
 import lombok.*;
 
 @Getter
@@ -14,6 +12,6 @@ public class OrderItemDto {
 
     private String id;
     private OrderDto order;
-    private FoodItemsDto foodItems;
+    private FoodItemsMenuDto foodItems;
     private int quantity;
 }

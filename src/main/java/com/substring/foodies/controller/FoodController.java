@@ -1,8 +1,9 @@
 package com.substring.foodies.controller;
 
 import com.substring.foodies.dto.FoodCategoryDto;
-import com.substring.foodies.dto.FoodItemsDto;
-import com.substring.foodies.entity.FoodCategory;
+import com.substring.foodies.dto.FoodItemDetailsDto;
+import com.substring.foodies.dto.FoodItemRequestDto;
+import com.substring.foodies.dto.FoodItemsMenuDto;
 import com.substring.foodies.service.FoodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,139 +24,193 @@ public class FoodController {
     @Autowired
     private FoodService foodService;
 
-    // ➕ Add food item
-    @PostMapping("/")
-    public ResponseEntity<FoodItemsDto> addFood(@RequestBody FoodItemsDto foodItemsDto) {
-        FoodItemsDto saved = foodService.addFood(foodItemsDto);
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+    // ---------------- CREATE ----------------
+    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
+    public ResponseEntity<FoodItemsMenuDto> addFood(
+            @RequestBody FoodItemRequestDto dto) {
+
+        return new ResponseEntity<>(
+                foodService.addFood(dto),
+                HttpStatus.CREATED
+        );
     }
 
-    // 🔁 Update food item
+    // ---------------- UPDATE ----------------
     @PutMapping("/{id}")
-    public ResponseEntity<FoodItemsDto> updateFood(@RequestBody FoodItemsDto foodItemsDto,
-                                                   @PathVariable String id) {
-        FoodItemsDto updated = foodService.updateFood(foodItemsDto, id);
-        return ResponseEntity.ok(updated);
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
+    public ResponseEntity<FoodItemsMenuDto> updateFood(
+            @RequestBody FoodItemRequestDto dto,
+            @PathVariable String id) {
+
+        return ResponseEntity.ok(
+                foodService.updateFood(dto, id)
+        );
     }
 
+    // ---------------- PATCH (SCALARS ONLY) ----------------
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
-    public ResponseEntity<FoodItemsDto> patchFood(@PathVariable String id, @RequestBody FoodItemsDto patchDto)
-    {
-        FoodItemsDto updatedFood = foodService.patchFood(id, patchDto);
-        return ResponseEntity.ok(updatedFood);
+    public ResponseEntity<FoodItemsMenuDto> patchFood(
+            @PathVariable String id,
+            @RequestBody FoodItemsMenuDto patchDto) {
+
+        return ResponseEntity.ok(
+                foodService.patchFood(id, patchDto)
+        );
     }
 
-    // ➕ Add food to multiple restaurants
-    @PostMapping("/{foodId}/restaurants")
-    public ResponseEntity<?> addRestoForFood(
-            @PathVariable String foodId,
-            @RequestBody List<String> restoIds
-    ) {
-        foodService.addRestoForFood(foodId, restoIds);
-        return new ResponseEntity<>("Restaurants added successfully", HttpStatus.OK);
-    }
-
-    // ❌ Remove food from multiple restaurants
-    @DeleteMapping("/{foodId}/restaurants")
-    public ResponseEntity<?> deleteRestoForFood(
-            @PathVariable String foodId,
-            @RequestBody List<String> restoIds
-    ) {
-        foodService.deleteRestoForFood(foodId, restoIds);
-        return new ResponseEntity<>("Restaurants deleted successfully", HttpStatus.OK);
-
-    }
-    // ❌ Delete food item
+    // ---------------- DELETE ----------------
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<Void> deleteFood(@PathVariable String id) {
         foodService.deleteFood(id);
         return ResponseEntity.noContent().build();
     }
 
-    // 📃 Get paginated list of all food items
+    // ---------------- ADMIN / DETAILS ----------------
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
-    public ResponseEntity<Page<FoodItemsDto>> getAllFoodItems(@RequestParam(value="page", required = false, defaultValue = "0") int page,
-                                                              @RequestParam(value="size", required = false, defaultValue = "6") int size,
-                                                              @RequestParam(value="sortBy", required = false, defaultValue = "rating") String sortBy,
-                                                              @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir) {
+    public ResponseEntity<Page<FoodItemDetailsDto>> getAllFoodItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "6") int size,
+            @RequestParam(defaultValue = "rating") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
 
-        Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
-        Pageable pageable= PageRequest.of(page, size, sort);
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
-        Page<FoodItemsDto> foodItems = foodService.getAllFoodItems(pageable);
-        return ResponseEntity.ok(foodItems);
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return ResponseEntity.ok(
+                foodService.getAllFoodItems(pageable)
+        );
     }
 
-    // 🔍 Get food item by ID
-    @GetMapping("/{id}")
+    @GetMapping("/{foodId}")
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
-    public ResponseEntity<FoodItemsDto> getFoodById(@PathVariable String id) {
-        FoodItemsDto foodItem = foodService.getFoodById(id);
-        return ResponseEntity.ok(foodItem);
+    public ResponseEntity<FoodItemDetailsDto> getFoodById(
+            @PathVariable String foodId) {
+
+        return ResponseEntity.ok(
+                foodService.getFoodById(foodId)
+        );
     }
 
-    // 🍽️ Get food items by restaurant ID
-    @GetMapping("/menuByRestaurant/{restaurantId}")
-    public ResponseEntity<List<FoodCategoryDto>> getFoodByRestaurant(@PathVariable String restaurantId) {
-        List<FoodCategoryDto> foodCategoryDtoList = foodService.getFoodByRestaurant(restaurantId);
-        return ResponseEntity.ok(foodCategoryDtoList);
+    // ---------------- MENU (USER) ----------------
+    @GetMapping("/restaurant/{restaurantId}/menu")
+    public ResponseEntity<List<FoodCategoryDto>> getMenuByRestaurant(
+            @PathVariable String restaurantId) {
+
+        return ResponseEntity.ok(
+                foodService.getFoodByRestaurant(restaurantId)
+        );
     }
 
-    @GetMapping("/menuByRestaurant/{restaurantId}/category/{category}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant_Category(@PathVariable String restaurantId, @PathVariable String category) {
-        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodCategory(restaurantId, category);
-        return ResponseEntity.ok(foodItems);
+    // ---------------- FILTERS ----------------
+    @GetMapping("/restaurant/{restaurantId}/category/{categoryId}")
+    public ResponseEntity<List<FoodItemDetailsDto>> byCategory(
+            @PathVariable String restaurantId,
+            @PathVariable String categoryId) {
+
+        return ResponseEntity.ok(
+                foodService.findByRestaurantIdAndFoodCategory(restaurantId, categoryId)
+        );
     }
 
-    @GetMapping("/menuByRestaurant/{restaurantId}/subcategory/{subcategory}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant_subCategory(@PathVariable String restaurantId, @PathVariable String subcategory) {
-        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodSubCategory(restaurantId, subcategory);
-        return ResponseEntity.ok(foodItems);
+    @GetMapping("/restaurant/{restaurantId}/subcategory/{subCategoryId}")
+    public ResponseEntity<List<FoodItemDetailsDto>> bySubCategory(
+            @PathVariable String restaurantId,
+            @PathVariable String subCategoryId) {
+
+        return ResponseEntity.ok(
+                foodService.findByRestaurantIdAndFoodSubCategory(restaurantId, subCategoryId)
+        );
     }
 
-    @GetMapping("/menuByRestaurant/{restaurantId}/type/{type}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByRestaurant_type(@PathVariable String restaurantId, @PathVariable String type) {
-        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodType(restaurantId, type);
-        return ResponseEntity.ok(foodItems);
+    @GetMapping("/restaurant/{restaurantId}/type/{type}")
+    public ResponseEntity<List<FoodItemDetailsDto>> byType(
+            @PathVariable String restaurantId,
+            @PathVariable String type) {
+
+        return ResponseEntity.ok(
+                foodService.findByRestaurantIdAndFoodType(restaurantId, type)
+        );
     }
 
-    @GetMapping("/menuByCategory/{category}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByCategory(@PathVariable String category) {
-        List<FoodItemsDto> foodItems = foodService.findByFoodCategory(category);
-        return ResponseEntity.ok(foodItems);
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<FoodItemDetailsDto>> byFoodCategory(
+            @PathVariable String categoryId) {
+
+        return ResponseEntity.ok(
+                foodService.findByFoodCategory(categoryId)
+        );
     }
 
-    @GetMapping("/menuBySubCategory/{subCategory}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodBySubCategory(@PathVariable String subCategory) {
-        List<FoodItemsDto> foodItems = foodService.findByFoodSubCategory(subCategory);
-        return ResponseEntity.ok(foodItems);
+    @GetMapping("/subcategory/{subCategoryId}")
+    public ResponseEntity<List<FoodItemDetailsDto>> byFoodSubCategory(
+            @PathVariable String subCategoryId) {
+
+        return ResponseEntity.ok(
+                foodService.findByFoodSubCategory(subCategoryId)
+        );
     }
 
-    @GetMapping("/menuByType/{type}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByType(@PathVariable String type) {
-        List<FoodItemsDto> foodItems = foodService.findByFoodType(type);
-        return ResponseEntity.ok(foodItems);
+    @GetMapping("/type/{type}")
+    public ResponseEntity<List<FoodItemDetailsDto>> byFoodType(
+            @PathVariable String type) {
+
+        return ResponseEntity.ok(
+                foodService.findByFoodType(type)
+        );
     }
 
-    @GetMapping("/{name}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByName(@PathVariable String name) {
-        List<FoodItemsDto> foodItems = foodService.findByFoodName(name);
-        return ResponseEntity.ok(foodItems);
+    @GetMapping("/search")
+    public ResponseEntity<List<FoodItemDetailsDto>> byName(
+            @RequestParam String name) {
+
+        return ResponseEntity.ok(
+                foodService.findByFoodName(name)
+        );
     }
 
-    @GetMapping("/restaurant/{restaurantId}/{name}")
-    public ResponseEntity<List<FoodItemsDto>> getFoodByResaturantAndFoodName(@PathVariable String restaurantId, @PathVariable String name) {
-        List<FoodItemsDto> foodItems = foodService.findByRestaurantIdAndFoodName(restaurantId, name);
-        return ResponseEntity.ok(foodItems);
+    @GetMapping("/restaurant/{restaurantId}/search")
+    public ResponseEntity<List<FoodItemDetailsDto>> byRestaurantAndName(
+            @PathVariable String restaurantId,
+            @RequestParam String name) {
+
+        return ResponseEntity.ok(
+                foodService.findByRestaurantIdAndFoodName(restaurantId, name)
+        );
     }
 
+    // ---------------- RELATION MANAGEMENT ----------------
+    @PostMapping("/{foodId}/restaurants")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
+    public ResponseEntity<Void> addRestoForFood(
+            @PathVariable String foodId,
+            @RequestBody List<String> restoIds) {
+
+        foodService.addRestoForFood(foodId, restoIds);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{foodId}/restaurants")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
+    public ResponseEntity<Void> deleteRestoForFood(
+            @PathVariable String foodId,
+            @RequestBody List<String> restoIds) {
+
+        foodService.deleteRestoForFood(foodId, restoIds);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ---------------- RATING ----------------
     @PatchMapping("/{foodId}/rating")
     public ResponseEntity<Void> updateFoodRating(
             @PathVariable String foodId,
-            @RequestParam double rating
-    ) {
+            @RequestParam double rating) {
+
         foodService.updateFoodRating(foodId, rating);
         return ResponseEntity.noContent().build();
     }

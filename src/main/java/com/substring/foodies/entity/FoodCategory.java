@@ -6,25 +6,20 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "food_category")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
-@Table(name = "food_category")
-public class FoodCategory extends BaseAuditableEntity{
+public class FoodCategory extends BaseAuditableEntity {
 
     @Id
     private String id;
 
     private String name;
-
     private String description;
 
     @OneToMany(mappedBy = "foodCategory", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<FoodItems> foodItemList = new ArrayList<>();
-
-    @OneToMany(mappedBy = "foodCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FoodSubCategory> foodSubCategoryList = new ArrayList<>();
-
 }
