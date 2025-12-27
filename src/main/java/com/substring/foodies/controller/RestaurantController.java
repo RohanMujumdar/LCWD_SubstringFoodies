@@ -66,7 +66,7 @@ public class RestaurantController {
     @GetMapping("/")
     public ResponseEntity<Page<RestaurantDto>> getAllRestaurants(@RequestParam(value="page", required = false, defaultValue = "0") int page,
                                                                  @RequestParam(value="size", required = false, defaultValue = "6") int size,
-                                                                 @RequestParam(value="sortBy", required = false, defaultValue = "rating_star") String sortBy,
+                                                                 @RequestParam(value="sortBy", required = false, defaultValue = "rating") String sortBy,
                                                                  @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir)
     {
         Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
@@ -79,7 +79,7 @@ public class RestaurantController {
     @GetMapping("/food/{id}")
     public ResponseEntity<Page<RestaurantDto>> getRestaurantsByFood(@RequestParam(value="page", required = false, defaultValue = "0") int page,
                                                                     @RequestParam(value="size", required = false, defaultValue = "6") int size,
-                                                                    @RequestParam(value="sortBy", required = false, defaultValue = "rating_star") String sortBy,
+                                                                    @RequestParam(value="sortBy", required = false, defaultValue = "rating") String sortBy,
                                                                     @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir,
                                                                     @PathVariable String id)
     {
@@ -93,7 +93,7 @@ public class RestaurantController {
     @GetMapping("/open")
     public ResponseEntity<Page<RestaurantDto>> getAllOpenRestaurants(@RequestParam(value="page", required = false, defaultValue = "0") int page,
                                                                      @RequestParam(value="size", required = false, defaultValue = "2") int size,
-                                                                     @RequestParam(value="sortBy", required = false, defaultValue = "rating_star") String sortBy,
+                                                                     @RequestParam(value="sortBy", required = false, defaultValue = "rating") String sortBy,
                                                                      @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir)
 
     {

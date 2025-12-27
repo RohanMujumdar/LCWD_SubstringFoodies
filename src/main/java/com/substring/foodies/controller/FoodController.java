@@ -78,8 +78,8 @@ public class FoodController {
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<Page<FoodItemsDto>> getAllFoodItems(@RequestParam(value="page", required = false, defaultValue = "0") int page,
                                                               @RequestParam(value="size", required = false, defaultValue = "6") int size,
-                                                              @RequestParam(value="sortBy", required = false, defaultValue = "id") String sortBy,
-                                                              @RequestParam(value="sortDir", required = false, defaultValue = "asc") String sortDir) {
+                                                              @RequestParam(value="sortBy", required = false, defaultValue = "rating") String sortBy,
+                                                              @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir) {
 
         Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
         Pageable pageable= PageRequest.of(page, size, sort);

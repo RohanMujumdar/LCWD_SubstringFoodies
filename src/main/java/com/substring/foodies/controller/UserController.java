@@ -82,10 +82,11 @@ public class UserController {
     }
 
     @PatchMapping("/patch/{id}")
-    public ResponseEntity<UserDto> patchUser(
+    public ResponseEntity<?> patchUser(
             @PathVariable String id,
             @RequestBody UserDto userDto
     ) {
+
         UserDto updatedUser = userService.patchUser(id, userDto);
         return ResponseEntity.ok(updatedUser);
     }
