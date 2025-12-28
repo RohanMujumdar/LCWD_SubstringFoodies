@@ -23,6 +23,9 @@ public class FoodSubCategory extends BaseAuditableEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     private FoodCategory foodCategory;
 
+    // 👇 controls category order in menu
+    private int displayOrder;
+
     @OneToMany(
             mappedBy = "foodSubCategory",
             cascade = CascadeType.ALL,

@@ -1,6 +1,7 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.dto.*;
+import com.substring.foodies.dto.enums.FoodType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -8,46 +9,67 @@ import java.util.List;
 
 public interface FoodService {
 
-    // ---------- CREATE / UPDATE ----------
+    // ===================== CREATE / UPDATE =====================
+
     FoodItemsMenuDto addFood(FoodItemRequestDto foodItemRequestDto);
 
-    FoodItemsMenuDto updateFood(FoodItemRequestDto foodItemRequestDto, String id);
+    FoodItemsMenuDto updateFood(FoodItemRequestDto foodItemRequestDto, String foodId);
 
-    FoodItemsMenuDto patchFood(String id, FoodItemsMenuDto patchDto);
+    FoodItemsMenuDto patchFood(String foodId, FoodItemsMenuDto patchDto);
 
-    // ---------- DELETE ----------
-    void deleteFood(String id);
+    // ===================== DELETE =====================
 
-    // ---------- ADMIN / DETAILS ----------
+    void deleteFood(String foodId);
+
+    // ===================== ADMIN / DETAILS =====================
+
     Page<FoodItemDetailsDto> getAllFoodItems(Pageable pageable);
 
     FoodItemDetailsDto getFoodById(String foodId);
 
-    // ---------- MENU / USER ----------
-    List<FoodCategoryDto> getFoodByRestaurant(String restoId);
+    // ===================== MENU =====================
 
-    // ---------- FILTERS ----------
-    List<FoodItemDetailsDto> findByRestaurantIdAndFoodCategory(String restoId, String foodCategoryId);
+    List<FoodCategoryDto> getFoodByRestaurant(String restaurantId);
 
-    List<FoodItemDetailsDto> findByRestaurantIdAndFoodSubCategory(String restoId, String foodSubCategoryId);
+    // ===================== RESTAURANT-SCOPED FILTERS =====================
 
-    List<FoodItemDetailsDto> findByRestaurantIdAndFoodType(String restoId, String foodType);
+    List<FoodItemDetailsDto> getFoodByRestaurantAndCategory(
+            String restaurantId,
+            String foodCategoryId
+    );
 
-    List<FoodItemDetailsDto> findByFoodCategory(String foodCategoryId);
+    List<FoodItemDetailsDto> getFoodByRestaurantAndSubCategory(
+            String restaurantId,
+            String foodSubCategoryId
+    );
 
-    List<FoodItemDetailsDto> findByFoodSubCategory(String foodSubCategoryId);
+    List<FoodItemDetailsDto> getFoodByRestaurantAndFoodType(
+            String restaurantId,
+            FoodType foodType
+    );
 
-    List<FoodItemDetailsDto> findByFoodType(String foodType);
+    List<FoodItemDetailsDto> searchFoodByRestaurantAndName(
+            String restaurantId,
+            String foodName
+    );
 
-    List<FoodItemDetailsDto> findByFoodName(String foodName);
+    // ===================== GLOBAL FILTERS =====================
 
-    List<FoodItemDetailsDto> findByRestaurantIdAndFoodName(String restoId, String foodName);
+    List<FoodItemDetailsDto> getFoodByCategory(String foodCategoryId);
 
-    // ---------- RELATION MANAGEMENT ----------
-    void addRestoForFood(String foodId, List<String> restoIds);
+    List<FoodItemDetailsDto> getFoodBySubCategory(String foodSubCategoryId);
 
-    void deleteRestoForFood(String foodId, List<String> restoIds);
+    List<FoodItemDetailsDto> getFoodByFoodType(FoodType foodType);
 
-    // ---------- RATING ----------
+    List<FoodItemDetailsDto> searchFoodByName(String foodName);
+
+    // ===================== RELATION MANAGEMENT =====================
+
+    void addRestoForFood(String foodId, List<String> restaurantIds);
+
+    void deleteRestoForFood(String foodId, List<String> restaurantIds);
+
+    // ===================== RATING =====================
+
     void updateFoodRating(String foodId, double rating);
 }

@@ -1,9 +1,7 @@
 package com.substring.foodies.service;
 
-import com.substring.foodies.dto.FoodCategoryDto;
-import com.substring.foodies.dto.FoodItemDetailsDto;
-import com.substring.foodies.dto.FoodItemRequestDto;
-import com.substring.foodies.dto.FoodItemsMenuDto;
+import com.substring.foodies.dto.*;
+import com.substring.foodies.dto.enums.FoodType;
 import com.substring.foodies.entity.FoodCategory;
 import com.substring.foodies.entity.FoodItems;
 import com.substring.foodies.entity.FoodSubCategory;
@@ -22,15 +20,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-
 
 @Slf4j
 @Service
-public class FoodServiceImpl implements FoodService{
+public class FoodServiceImpl implements FoodService {
 
     @Autowired
     private ModelMapper modelMapper;
@@ -47,6 +42,15 @@ public class FoodServiceImpl implements FoodService{
     @Autowired
     private FoodSubCategoryRepository foodSubCategoryRepository;
 
+    // ===================== HELPERS =====================
+
+    private void validateRestaurant(String restaurantId) {
+        if (!restaurantRepository.existsById(restaurantId)) {
+            throw new ResourceNotFound("Restaurant not found with id = " + restaurantId);
+        }
+    }
+
+    // ===================== CREATE =====================
 
     @Override
     public FoodItemsMenuDto addFood(FoodItemRequestDto dto) {
@@ -86,13 +90,14 @@ public class FoodServiceImpl implements FoodService{
         return modelMapper.map(saved, FoodItemsMenuDto.class);
     }
 
+    // ===================== UPDATE =====================
 
     @Override
-    public FoodItemsMenuDto updateFood(FoodItemRequestDto dto, String id) {
+    public FoodItemsMenuDto updateFood(FoodItemRequestDto dto, String foodId) {
 
-        FoodItems food = foodItemRepository.findById(id)
+        FoodItems food = foodItemRepository.findById(foodId)
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + id));
+                        new ResourceNotFound("Food item not found with id = " + foodId));
 
         food.setName(dto.getName());
         food.setDescription(dto.getDescription());
@@ -110,7 +115,7 @@ public class FoodServiceImpl implements FoodService{
         FoodSubCategory subCategory = foodSubCategoryRepository
                 .findById(dto.getFoodSubCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food sub category not found"));
+                        new ResourceNotFound("Food subcategory not found"));
 
         if (!subCategory.getFoodCategory().getId().equals(category.getId())) {
             throw new FoodCategoryException("SubCategory does not belong to category");
@@ -123,12 +128,14 @@ public class FoodServiceImpl implements FoodService{
         return modelMapper.map(updated, FoodItemsMenuDto.class);
     }
 
-    @Override
-    public FoodItemsMenuDto patchFood(String id, FoodItemsMenuDto patchDto) {
+    // ===================== PATCH =====================
 
-        FoodItems food = foodItemRepository.findById(id)
+    @Override
+    public FoodItemsMenuDto patchFood(String foodId, FoodItemsMenuDto patchDto) {
+
+        FoodItems food = foodItemRepository.findById(foodId)
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food not found with id = " + id));
+                        new ResourceNotFound("Food not found with id = " + foodId));
 
         if (patchDto.getName() != null) food.setName(patchDto.getName());
         if (patchDto.getDescription() != null) food.setDescription(patchDto.getDescription());
@@ -142,184 +149,224 @@ public class FoodServiceImpl implements FoodService{
         return modelMapper.map(updated, FoodItemsMenuDto.class);
     }
 
+    // ===================== DELETE =====================
 
     @Override
-    public void deleteFood(String id) {
-
-        if(!foodItemRepository.existsById(id))
-        {
-            throw new ResourceNotFound("Food Item not found");
+    public void deleteFood(String foodId) {
+        if (!foodItemRepository.existsById(foodId)) {
+            throw new ResourceNotFound("Food item not found with id = " + foodId);
         }
-        foodItemRepository.deleteById(id);
+        foodItemRepository.deleteById(foodId);
     }
 
+    // ===================== ADMIN =====================
 
     @Override
     public Page<FoodItemDetailsDto> getAllFoodItems(Pageable pageable) {
-
-        Page<FoodItems> foodItemsList = foodItemRepository.findAll(pageable);
-        return foodItemsList
-                .map(food -> modelMapper
-                .map(food, FoodItemDetailsDto.class));
-    }
-
-    @Override
-    public List<FoodCategoryDto> getFoodByRestaurant(String restoId) {
-
-        Restaurant restaurant = restaurantRepository
-                                    .findById(restoId)
-                                    .orElseThrow(()->new ResourceNotFound("Food item not found with id = "+restoId));
-
-        Set<FoodItems> foodItemsList = restaurant.getFoodItemsList();
-
-        List<FoodCategoryDto> foodCategoryDtoList = foodItemsList
-                                                        .stream()
-                                                        .map(food->food.getFoodCategory())
-                                                        .filter(Objects::nonNull)
-                                                        .distinct()
-                                                        .map(category -> modelMapper.map(category, FoodCategoryDto.class))
-                                                        .toList();
-
-        return foodCategoryDtoList;
-    }
-
-    @Override
-    public List<FoodItemDetailsDto> findByRestaurantIdAndFoodCategory(String restoId, String foodCategoryId) {
-
-        restaurantRepository.findById(restoId).orElseThrow(()->new ResourceNotFound(String.format("Restaurant not found with id: " + restoId)));
-
-        List<FoodItems> foodItemsList = foodItemRepository.findByRestaurantsIdAndFoodCategoryId(restoId, foodCategoryId);
-
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
-    }
-
-    @Override
-    public List<FoodItemDetailsDto> findByRestaurantIdAndFoodSubCategory(String restoId, String foodSubCategoryId) {
-
-        restaurantRepository.findById(restoId).orElseThrow(()->new ResourceNotFound(String.format("Restaurant not found with id: " + restoId)));
-
-        List<FoodItems> foodItemsList = foodItemRepository.findByRestaurantsIdAndFoodSubCategoryId(restoId, foodSubCategoryId);
-
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
-    }
-
-    @Override
-    public List<FoodItemDetailsDto> findByRestaurantIdAndFoodType(String restoId, String foodType) {
-
-        restaurantRepository.findById(restoId).orElseThrow(()->new ResourceNotFound(String.format("Restaurant not found with id: " + restoId)));
-
-        List<FoodItems> foodItemsList = foodItemRepository.findByRestaurantsIdAndFoodType(restoId, foodType);
-
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
-    }
-
-    @Override
-    public List<FoodItemDetailsDto> findByFoodCategory(String foodCategoryId) {
-        List<FoodItems> foodItemsList = foodItemRepository.findByFoodCategoryId(foodCategoryId);
-
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
-    }
-
-    @Override
-    public List<FoodItemDetailsDto> findByFoodSubCategory(String foodSubCategoryId) {
-        List<FoodItems> foodItemsList = foodItemRepository.findByFoodSubCategoryId(foodSubCategoryId);
-
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
-    }
-
-    @Override
-    public List<FoodItemDetailsDto> findByFoodType(String foodType) {
-        List<FoodItems> foodItemsList = foodItemRepository.findByFoodType(foodType);
-
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
-
+        return foodItemRepository
+                .findAll(pageable)
+                .map(food -> modelMapper.map(food, FoodItemDetailsDto.class));
     }
 
     @Override
     public FoodItemDetailsDto getFoodById(String foodId) {
+        FoodItems food = foodItemRepository.findById(foodId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + foodId));
+        return modelMapper.map(food, FoodItemDetailsDto.class);
+    }
 
-        FoodItems foodItems = foodItemRepository.findById(foodId).orElseThrow(() -> new ResourceNotFound("Food Item not found with id = " + foodId));
-        return modelMapper.map(foodItems, FoodItemDetailsDto.class);
+    // ===================== MENU =====================
+
+    @Override
+    public List<FoodCategoryDto> getFoodByRestaurant(String restaurantId) {
+
+        validateRestaurant(restaurantId);
+
+        List<FoodItems> foodItems = foodItemRepository.findMenuByRestaurant(restaurantId);
+
+        Map<String, FoodCategoryDto> categoryMap = new LinkedHashMap<>();
+
+        for (FoodItems food : foodItems) {
+
+            FoodCategory category = food.getFoodCategory();
+            FoodSubCategory subCategory = food.getFoodSubCategory();
+
+            if (category == null || subCategory == null) continue;
+
+            FoodCategoryDto categoryDto = categoryMap.computeIfAbsent(
+                    category.getId(),
+                    id -> new FoodCategoryDto(
+                            category.getId(),
+                            category.getName(),
+                            category.getDescription(),
+                            new ArrayList<>()
+                    )
+            );
+
+            FoodSubCategoryResponseDto subCategoryDto =
+                    categoryDto.getSubCategories()
+                            .stream()
+                            .filter(sc -> sc.getId().equals(subCategory.getId()))
+                            .findFirst()
+                            .orElseGet(() -> {
+                                FoodSubCategoryResponseDto scDto =
+                                        new FoodSubCategoryResponseDto(
+                                                subCategory.getId(),
+                                                subCategory.getName(),
+                                                new ArrayList<>()
+                                        );
+                                categoryDto.getSubCategories().add(scDto);
+                                return scDto;
+                            });
+
+            subCategoryDto.getFoodItems()
+                    .add(modelMapper.map(food, FoodItemsMenuDto.class));
+        }
+
+        categoryMap.values().forEach(cat ->
+                cat.getSubCategories().forEach(sub ->
+                        sub.getFoodItems()
+                                .sort(Comparator.comparing(FoodItemsMenuDto::getRating).reversed())
+                )
+        );
+
+        return new ArrayList<>(categoryMap.values());
+    }
+
+    // ===================== FILTERS =====================
+
+    @Override
+    public List<FoodItemDetailsDto> getFoodByRestaurantAndCategory(
+            String restaurantId, String foodCategoryId) {
+
+        validateRestaurant(restaurantId);
+
+        return foodItemRepository
+                .findByRestaurantsIdAndFoodCategoryIdOrderByRatingDesc(
+                        restaurantId, foodCategoryId)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
     }
 
     @Override
-    public List<FoodItemDetailsDto> findByFoodName(String foodName) {
-        List<FoodItems> foodItemsList = foodItemRepository.findByName(foodName);
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
+    public List<FoodItemDetailsDto> getFoodByRestaurantAndSubCategory(
+            String restaurantId, String foodSubCategoryId) {
+
+        validateRestaurant(restaurantId);
+
+        return foodItemRepository
+                .findByRestaurantsIdAndFoodSubCategoryIdOrderByRatingDesc(
+                        restaurantId, foodSubCategoryId)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
     }
 
     @Override
-    public List<FoodItemDetailsDto> findByRestaurantIdAndFoodName(String restoId, String foodName) {
+    public List<FoodItemDetailsDto> getFoodByRestaurantAndFoodType(
+            String restaurantId, FoodType foodType) {
 
-        restaurantRepository.findById(restoId).orElseThrow(()->new ResourceNotFound(String.format("Restaurant not found with id = " + restoId)));
+        validateRestaurant(restaurantId);
 
-        List<FoodItems> foodItemsList = foodItemRepository.findByRestaurantsIdAndName(restoId, foodName);
+        return foodItemRepository
+                .findByRestaurantsIdAndFoodTypeOrderByRatingDesc(
+                        restaurantId, foodType)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
+    }
 
-        return foodItemsList.stream().map(foodItems -> modelMapper.map(foodItems, FoodItemDetailsDto.class)).toList();
+    @Override
+    public List<FoodItemDetailsDto> getFoodByCategory(String foodCategoryId) {
+        return foodItemRepository
+                .findByFoodCategoryIdOrderByRatingDesc(foodCategoryId)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
+    }
 
+    @Override
+    public List<FoodItemDetailsDto> getFoodBySubCategory(String foodSubCategoryId) {
+        return foodItemRepository
+                .findByFoodSubCategoryIdOrderByRatingDesc(foodSubCategoryId)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
+    }
+
+    @Override
+    public List<FoodItemDetailsDto> getFoodByFoodType(FoodType foodType) {
+        return foodItemRepository
+                .findByFoodTypeOrderByRatingDesc(foodType)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
+    }
+
+    @Override
+    public List<FoodItemDetailsDto> searchFoodByName(String foodName) {
+        return foodItemRepository
+                .findByNameIgnoreCaseContainingOrderByRatingDesc(foodName)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
+    }
+
+    @Override
+    public List<FoodItemDetailsDto> searchFoodByRestaurantAndName(
+            String restaurantId, String foodName) {
+
+        validateRestaurant(restaurantId);
+
+        return foodItemRepository
+                .findByRestaurantsIdAndNameIgnoreCaseContainingOrderByRatingDesc(
+                        restaurantId, foodName)
+                .stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
+    }
+
+    // ===================== RELATION MANAGEMENT =====================
+
+    @Override
+    @Transactional
+    public void addRestoForFood(String foodId, List<String> restaurantIds) {
+
+        FoodItems food = foodItemRepository.findById(foodId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + foodId));
+
+        List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
+
+        if (restaurants.size() != restaurantIds.size()) {
+            throw new ResourceNotFound("One or more restaurants not found");
+        }
+
+        restaurants.forEach(resto -> resto.getFoodItemsList().add(food));
+        restaurantRepository.saveAll(restaurants);
     }
 
     @Override
     @Transactional
-    public void addRestoForFood(String foodId, List<String> restoIds) {
+    public void deleteRestoForFood(String foodId, List<String> restaurantIds) {
 
-        FoodItems foodItem = foodItemRepository.findById(foodId)
+        FoodItems food = foodItemRepository.findById(foodId)
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food Item not found with id = " + foodId)
-                );
+                        new ResourceNotFound("Food item not found with id = " + foodId));
 
-        List<Restaurant> restaurants = restaurantRepository.findAllById(restoIds);
+        List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
 
-        if (restaurants.size() != restoIds.size()) {
-            Set<String> foundIds = restaurants.stream()
-                    .map(Restaurant::getId)
-                    .collect(Collectors.toSet());
-
-            List<String> missingIds = restoIds.stream()
-                    .filter(id -> !foundIds.contains(id))
-                    .toList();
-
-            throw new ResourceNotFound("Restaurants not found with ids: " + missingIds);
+        if (restaurants.size() != restaurantIds.size()) {
+            throw new ResourceNotFound("One or more restaurants not found");
         }
 
-        for (Restaurant resto : restaurants) {
-            resto.getFoodItemsList().add(foodItem);
-        }
-
-        // save once (owning side)
+        restaurants.forEach(resto -> resto.getFoodItemsList().remove(food));
         restaurantRepository.saveAll(restaurants);
     }
 
-
-    @Override
-    @Transactional
-    public void deleteRestoForFood(String foodId, List<String> restoIds) {
-
-        FoodItems foodItem = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food Item not found with id = " + foodId)
-                );
-
-        List<Restaurant> restaurants = restaurantRepository.findAllById(restoIds);
-
-        if (restaurants.size() != restoIds.size()) {
-            Set<String> foundIds = restaurants.stream()
-                    .map(Restaurant::getId)
-                    .collect(Collectors.toSet());
-
-            List<String> missingIds = restoIds.stream()
-                    .filter(id -> !foundIds.contains(id))
-                    .toList();
-
-            throw new ResourceNotFound("Restaurants not found with ids: " + missingIds);
-        }
-
-        for (Restaurant resto : restaurants) {
-            resto.getFoodItemsList().remove(foodItem);
-        }
-
-        restaurantRepository.saveAll(restaurants);
-    }
+    // ===================== RATING =====================
 
     @Override
     @Transactional
@@ -329,13 +376,14 @@ public class FoodServiceImpl implements FoodService{
             throw new IllegalArgumentException("Rating must be between 0 and 5");
         }
 
-        FoodItems foodItem = foodItemRepository
-                                .findById(foodId)
-                                .orElseThrow(()->new ResourceNotFound("Food Item not found with id = " + foodId));
+        FoodItems food = foodItemRepository.findById(foodId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + foodId));
 
-        foodItem.setRating(rating);
-        foodItemRepository.save(foodItem);
-        updateRestaurantRating(foodItem.getRestaurants());
+        food.setRating(rating);
+        foodItemRepository.save(food);
+
+        updateRestaurantRating(food.getRestaurants());
     }
 
     private void updateRestaurantRating(Set<Restaurant> restaurants) {
@@ -345,5 +393,4 @@ public class FoodServiceImpl implements FoodService{
             restaurantRepository.save(r);
         }
     }
-
 }

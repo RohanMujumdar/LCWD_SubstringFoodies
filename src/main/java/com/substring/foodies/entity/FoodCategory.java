@@ -18,7 +18,11 @@ public class FoodCategory extends BaseAuditableEntity {
     private String id;
 
     private String name;
+
     private String description;
+
+    // 👇 controls category order in menu
+    private int displayOrder;
 
     @OneToMany(mappedBy = "foodCategory", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FoodSubCategory> foodSubCategoryList = new ArrayList<>();

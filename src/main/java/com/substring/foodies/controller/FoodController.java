@@ -4,6 +4,7 @@ import com.substring.foodies.dto.FoodCategoryDto;
 import com.substring.foodies.dto.FoodItemDetailsDto;
 import com.substring.foodies.dto.FoodItemRequestDto;
 import com.substring.foodies.dto.FoodItemsMenuDto;
+import com.substring.foodies.dto.enums.FoodType;
 import com.substring.foodies.service.FoodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -114,7 +115,7 @@ public class FoodController {
             @PathVariable String categoryId) {
 
         return ResponseEntity.ok(
-                foodService.findByRestaurantIdAndFoodCategory(restaurantId, categoryId)
+                foodService.getFoodByRestaurantAndCategory(restaurantId, categoryId)
         );
     }
 
@@ -124,17 +125,17 @@ public class FoodController {
             @PathVariable String subCategoryId) {
 
         return ResponseEntity.ok(
-                foodService.findByRestaurantIdAndFoodSubCategory(restaurantId, subCategoryId)
+                foodService.getFoodByRestaurantAndCategory(restaurantId, subCategoryId)
         );
     }
 
     @GetMapping("/restaurant/{restaurantId}/type/{type}")
     public ResponseEntity<List<FoodItemDetailsDto>> byType(
             @PathVariable String restaurantId,
-            @PathVariable String type) {
+            @PathVariable FoodType type) {
 
         return ResponseEntity.ok(
-                foodService.findByRestaurantIdAndFoodType(restaurantId, type)
+                foodService.getFoodByRestaurantAndFoodType(restaurantId, type)
         );
     }
 
@@ -143,7 +144,7 @@ public class FoodController {
             @PathVariable String categoryId) {
 
         return ResponseEntity.ok(
-                foodService.findByFoodCategory(categoryId)
+                foodService.getFoodByCategory(categoryId)
         );
     }
 
@@ -152,16 +153,16 @@ public class FoodController {
             @PathVariable String subCategoryId) {
 
         return ResponseEntity.ok(
-                foodService.findByFoodSubCategory(subCategoryId)
+                foodService.getFoodBySubCategory(subCategoryId)
         );
     }
 
     @GetMapping("/type/{type}")
     public ResponseEntity<List<FoodItemDetailsDto>> byFoodType(
-            @PathVariable String type) {
+            @PathVariable FoodType type) {
 
         return ResponseEntity.ok(
-                foodService.findByFoodType(type)
+                foodService.getFoodByFoodType(type)
         );
     }
 
@@ -170,7 +171,7 @@ public class FoodController {
             @RequestParam String name) {
 
         return ResponseEntity.ok(
-                foodService.findByFoodName(name)
+                foodService.searchFoodByName(name)
         );
     }
 
@@ -180,7 +181,7 @@ public class FoodController {
             @RequestParam String name) {
 
         return ResponseEntity.ok(
-                foodService.findByRestaurantIdAndFoodName(restaurantId, name)
+                foodService.searchFoodByRestaurantAndName(restaurantId, name)
         );
     }
 
