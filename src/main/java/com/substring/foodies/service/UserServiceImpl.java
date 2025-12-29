@@ -161,13 +161,39 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public UserDto signUpUser(UserDto signUpUserDto) {
+    public UserDto signUpUser(UserDto dto) {
 
-        User savedUser = modelMapper.map(signUpUserDto, User.class);
-        savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
-        savedUser.getAddress().setUser(savedUser);
-        return modelMapper.map(userRepository.save(savedUser), UserDto.class);
+        // 1️⃣ Validate address
+        if (dto.getAddress() == null) {
+            throw new BadRequestException("Address is required");
+        }
+
+        AddressDto addressDto = dto.getAddress();
+
+        if (addressDto.getAddressLine() == null || addressDto.getAddressLine().isBlank()) {
+            throw new BadRequestException("Address line is required");
+        }
+
+        if (addressDto.getCity() == null || addressDto.getCity().isBlank()) {
+            throw new BadRequestException("City is required");
+        }
+
+        if (addressDto.getPincode() == null || !addressDto.getPincode().matches("\\d{6}")) {
+            throw new BadRequestException("Invalid pincode");
+        }
+
+        // 2️⃣ Map & save user
+        User user = modelMapper.map(dto, User.class);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // 3️⃣ Own the address
+        Address address = user.getAddress();
+        address.setUser(user);   // one-to-one ownership
+
+        User savedUser = userRepository.save(user);
+        return modelMapper.map(savedUser, UserDto.class);
     }
+
 
     public UserDto patchUser(String userId, UserDto patchDto) {
 
