@@ -34,7 +34,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
             throw new BadRequestException("Sub-category name is required");
         }
 
-        if (dto.getFoodCategoryId() == null || dto.getFoodCategoryId() == null) {
+        if (dto.getFoodCategoryId() == null) {
             throw new BadRequestException("Food category is required");
         }
 

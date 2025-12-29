@@ -36,9 +36,6 @@ public class RestaurantController {
     @Autowired
     private RestaurantService restaurantService;
 
-    @Autowired
-    private RestaurantRepository restaurantRepository;
-
     private Logger logger= LoggerFactory.getLogger(RestaurantController.class);
 
     @Value("${restaurant.file.path}")

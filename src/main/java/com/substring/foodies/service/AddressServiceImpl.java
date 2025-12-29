@@ -88,9 +88,14 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public void deleteAddress(String id) {
-        if (!addressRepository.existsById(id)) {
-            throw new ResourceNotFound("Address not found with id = " + id);
+
+        Address existingAddress = addressRepository
+                                    .findById(id)
+                                    .orElseThrow(()->new ResourceNotFound("Address not found with id = " + id));
+        if (!existingAddress.getRestaurants().isEmpty()) {
+            throw new IllegalStateException("Address is linked to restaurants");
         }
+
         addressRepository.deleteById(id);
     }
 }
