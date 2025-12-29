@@ -160,6 +160,7 @@ public class RestaurantController {
         RestaurantDto restaurantDto=restaurantService.getRestaurantById(restaurantId);
         String fileName=restaurantDto.getBanner();
         String fullFilePath=path+fileName;
+        logger.info("File path = "+fullFilePath);
 
         Path actualFilePath= Paths.get(fullFilePath);
         Resource resource=new UrlResource(actualFilePath.toUri());
@@ -169,7 +170,7 @@ public class RestaurantController {
                     .contentType(MediaType.IMAGE_PNG)
                     .body(resource);
         }else {
-            throw new FileNotFoundException("File not found.");
+            throw new ResourceNotFound("File not found.");
         }
     }
 }

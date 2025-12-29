@@ -37,6 +37,9 @@ services:
     env_file:
       - .env
 
+    volumes:
+      - ./uploads:/app/uploads
+
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql_dbservice:3306/lcwd_food_delivery_app
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}

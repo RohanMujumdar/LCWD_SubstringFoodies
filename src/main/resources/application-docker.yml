@@ -2,6 +2,9 @@ spring:
   application:
     name: lcwd_substringFoodies
 
+  app:
+    base-url: http://spring-web-service:8062
+
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -41,7 +44,7 @@ jwt:
 
 restaurant:
   file:
-    path: uploads/restaurant_banner/
+    path: /app/uploads/restaurant_banner/
 
 server:
   port: 8062

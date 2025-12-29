@@ -22,6 +22,7 @@ public class Restaurant extends BaseAuditableEntity{
 
     @Id
     private String id;
+
     private String name;
 
     @Lob

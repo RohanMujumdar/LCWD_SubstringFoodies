@@ -1,10 +1,9 @@
 package com.substring.foodies.service;
-import com.substring.foodies.converter.Converter;
+
 import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.dto.FileData;
 import com.substring.foodies.dto.RestaurantDto;
 import com.substring.foodies.entity.Address;
-import com.substring.foodies.entity.FoodItems;
 import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.entity.User;
 import com.substring.foodies.exception.ResourceNotFound;
@@ -24,8 +23,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -34,7 +31,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 
 @Service
-public class RestaurantServiceImpl implements RestaurantService{
+public class RestaurantServiceImpl implements RestaurantService {
 
     @Autowired
     private FileService fileService;
@@ -44,9 +41,6 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Autowired
     private AddressRepository addressRepository;
-
-    @Autowired
-    private Converter converter;
 
     @Autowired
     private UserRepository userRepository;
@@ -60,32 +54,35 @@ public class RestaurantServiceImpl implements RestaurantService{
     @Value("${restaurant.file.path}")
     private String bannerFolderpath;
 
+    @Value("${spring.app.base-url}")
+    private String baseUrl;
+
     @Override
     public RestaurantDto addRestaurant(RestaurantDto restaurantDto) {
 
         Restaurant restaurant = modelMapper.map(restaurantDto, Restaurant.class);
 
-        // Set owner
         User owner = userRepository.findById(restaurantDto.getOwnerId())
-                .orElseThrow(() -> new ResourceNotFound("User not found with id = "+restaurantDto.getOwnerId()));
+                .orElseThrow(() ->
+                        new ResourceNotFound("User not found with id = " + restaurantDto.getOwnerId()));
         restaurant.setOwner(owner);
 
         List<String> addressIds = restaurantDto.getAddresses()
-                                    .stream()
-                                    .map(add->add.getId())
-                                    .toList();
+                .stream()
+                .map(AddressDto::getId)
+                .toList();
 
         List<Address> addressList = addressRepository.findAllById(addressIds);
-        Set<String> set = addressList
-                            .stream()
-                            .map(add->add.getId())
-                            .collect(Collectors.toSet());
+        Set<String> foundIds = addressList.stream()
+                .map(Address::getId)
+                .collect(Collectors.toSet());
 
-        List<String> missingIds = addressIds.stream().filter(id->!set.contains(id)).toList();
+        List<String> missingIds = addressIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
 
-        if(!missingIds.isEmpty())
-        {
-            throw new ResourceNotFound("Addresses not found with ids = "+missingIds);
+        if (!missingIds.isEmpty()) {
+            throw new ResourceNotFound("Addresses not found with ids = " + missingIds);
         }
 
         for (Address address : addressList) {
@@ -97,45 +94,43 @@ public class RestaurantServiceImpl implements RestaurantService{
         return modelMapper.map(saved, RestaurantDto.class);
     }
 
-
     @Override
     public Page<RestaurantDto> getAllRestaurants(Pageable pageable) {
-         Page<Restaurant> restaurants= restaurantRepository.findAll(pageable);
-
-         return restaurants.map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class));
+        return restaurantRepository.findAll(pageable)
+                .map(resto->modelMapper.map(resto, RestaurantDto.class));
     }
 
     @Override
     public RestaurantDto updateSavedRestaurant(RestaurantDto restaurantDto, String id) {
 
-        Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound());
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFound("Restaurant not found"));
 
         restaurant.setName(restaurantDto.getName());
         restaurant.setOpenTime(restaurantDto.getOpenTime());
         restaurant.setCloseTime(restaurantDto.getCloseTime());
         restaurant.setOpen(restaurantDto.isOpen());
-        restaurant.setBanner(restaurantDto.getBanner());
 
-        List<String> addressIds = restaurantDto
-                                    .getAddresses()
-                                    .stream()
-                                    .map(add->add.getId())
-                                    .toList();
+        // ❌ Banner NOT updated here
+
+        List<String> addressIds = restaurantDto.getAddresses()
+                .stream()
+                .map(AddressDto::getId)
+                .toList();
 
         List<Address> addressList = addressRepository.findAllById(addressIds);
-        Set<String> set = addressList
-                            .stream()
-                            .map(add->add.getId())
-                            .collect(Collectors.toSet());
-        List<String> missingIds = addressIds
-                                    .stream()
-                                    .filter(addId->!set.contains(addId))
-                                    .toList();
+        Set<String> foundIds = addressList.stream()
+                .map(Address::getId)
+                .collect(Collectors.toSet());
 
-        if(!missingIds.isEmpty())
-        {
-            throw new ResourceNotFound("Addresses not found with ids = "+missingIds);
+        List<String> missingIds = addressIds.stream()
+                .filter(idVal -> !foundIds.contains(idVal))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            throw new ResourceNotFound("Addresses not found with ids = " + missingIds);
         }
+
         for (Address address : restaurant.getAddresses()) {
             address.getRestaurants().remove(restaurant);
         }
@@ -145,27 +140,22 @@ public class RestaurantServiceImpl implements RestaurantService{
             restaurant.getAddresses().add(address);
             address.getRestaurants().add(restaurant);
         }
-        // Save the updated restaurant entity back to the database
-        Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
 
-        // Convert the updated entity back to a DTO
-        return modelMapper.map(updatedRestaurant, RestaurantDto.class);
+        Restaurant updated = restaurantRepository.save(restaurant);
+        return modelMapper.map(updated, RestaurantDto.class);
     }
 
     @Override
     public Page<RestaurantDto> findByFoodItemsList_Id(String foodId, Pageable pageable) {
-
-        Page<Restaurant> restaurantList =
-                restaurantRepository.findByFoodItemsList_Id(foodId, pageable);
-
-        return restaurantList
-                .map(resto -> modelMapper.map(resto, RestaurantDto.class));
+        return restaurantRepository
+                .findByFoodItemsList_Id(foodId, pageable)
+                .map(resto->modelMapper.map(resto, RestaurantDto.class));
     }
 
     @Override
     public RestaurantDto getRestaurantById(String id) {
-
-        Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound("Restaurant not found."));
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFound("Restaurant not found"));
         return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
@@ -179,34 +169,38 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     public Page<RestaurantDto> getAllOpenRestaurants(Pageable pageable) {
-        Page<Restaurant> restaurants=restaurantRepository.findAllOpenRestaurants(pageable);
-
-        return restaurants.map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class));
+        return restaurantRepository
+                .findAllOpenRestaurants(pageable)
+                .map(resto->modelMapper.map(resto, RestaurantDto.class));
     }
 
     @Override
     public List<RestaurantDto> findByNameContainingIgnoreCase(String pattern) {
-        List<Restaurant> restaurants = restaurantRepository.findByNameContainingIgnoreCase(pattern);
-        return restaurants.stream().map(restaurant -> modelMapper.map(restaurant, RestaurantDto.class)).collect(toList());
+        return restaurantRepository.findByNameContainingIgnoreCase(pattern)
+                .stream()
+                .map(resto->modelMapper.map(resto, RestaurantDto.class))
+                .toList();
     }
 
     @Override
     public RestaurantDto uploadBanner(MultipartFile file, String id) throws IOException {
 
-        Restaurant restaurant=restaurantRepository.findById(id).orElseThrow(()->new ResourceNotFound("Restaurant not found with id = "+id));
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Restaurant not found with id = " + id));
 
-        String fileName=file.getOriginalFilename();
-        String fileExtension=fileName.substring(fileName.lastIndexOf('.'));
-        String newFileName=new Date().getTime()+fileExtension;
-        Path oldFilePath = Paths.get(bannerFolderpath+restaurant.getBanner());
+        String fileName = file.getOriginalFilename();
+        String extension = fileName.substring(fileName.lastIndexOf('.'));
+        String newFileName = System.currentTimeMillis() + extension;
 
-        if(Files.exists(oldFilePath))
-        {
+        Path oldFilePath = Paths.get(bannerFolderpath + restaurant.getBanner());
+        if (Files.exists(oldFilePath)) {
             Files.delete(oldFilePath);
         }
 
-        FileData fileData = fileService.uploadFile(file, bannerFolderpath+newFileName);
+        FileData fileData = fileService.uploadFile(file, bannerFolderpath + newFileName);
         restaurant.setBanner(fileData.getFileName());
+
         restaurantRepository.save(restaurant);
         return modelMapper.map(restaurant, RestaurantDto.class);
     }
@@ -215,18 +209,16 @@ public class RestaurantServiceImpl implements RestaurantService{
     public void deleteBanner(String path) {
         try {
             fileService.deleteFile(path);
-        }catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
     public List<RestaurantDto> getByOwner(String ownerId) {
-
-        List<Restaurant> restaurantList = restaurantRepository.findByOwnerId(ownerId);
-        return restaurantList.stream().map(restaurant ->
-            modelMapper.map(restaurant, RestaurantDto.class)
-        ).toList();
+        return restaurantRepository.findByOwnerId(ownerId)
+                .stream()
+                .map(resto->modelMapper.map(resto, RestaurantDto.class))
+                .toList();
     }
-
 }

@@ -27,10 +27,4 @@ public class RestaurantDto {
     private String ownerId;
     private String banner;
     private double rating;
-
-    @JsonProperty
-    public String imageUrl()
-    {
-        return "http://localhost:8080/images/" + banner;
-    }
 }

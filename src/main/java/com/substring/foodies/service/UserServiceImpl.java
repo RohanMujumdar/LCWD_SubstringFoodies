@@ -1,7 +1,6 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.controller.AuthController;
-import com.substring.foodies.converter.Converter;
 import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.dto.ChangePasswordDto;
 import com.substring.foodies.dto.ChangeRoleDto;
@@ -39,9 +38,6 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RestaurantRepository restaurantRepository;
-
-    @Autowired
-    private Converter converter;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -106,30 +102,36 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto savedUser(UserDto userDto) {
 
-        User savedUser = converter.dtoToEntity(userDto);
+        User savedUser = modelMapper.map(userDto, User.class);
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
 
-        userRepository.save(savedUser);
-        return converter.entityToDto(savedUser);
+
+        return modelMapper.map(userRepository.save(savedUser), UserDto.class);
     }
 
     @Override
     public Page<UserDto> getAllUsers(Pageable page) {
-        Page<User> userPage=userRepository.findAll(page);
-        return userPage.map(user->converter.entityToDto(user));
+        Page<User> userPage = userRepository.findAll(page);
+        return userPage.map(user -> modelMapper.map(user, UserDto.class));
     }
 
     @Override
     public List<UserDto> getUserByName(String userName) {
-
-        List<User> user=userRepository.findByName(userName);
-        return user.stream().map(newUser->converter.entityToDto(newUser)).collect(Collectors.toList());
+        List<User> users = userRepository.findByName(userName);
+        return users.stream()
+                .map(user -> modelMapper.map(user, UserDto.class))
+                .collect(Collectors.toList());
     }
 
     @Override
     public UserDto getUserByEmail(String userEmail) {
-        User user = userRepository.findByEmail(userEmail).orElseThrow(()->new ResourceNotFound(String.format("User not found with email = %s", userEmail)));
-        return converter.entityToDto(user);
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() ->
+                        new ResourceNotFound(
+                                String.format("User not found with email = %s", userEmail)
+                        )
+                );
+        return modelMapper.map(user, UserDto.class);
     }
 
     @Override
