@@ -1,6 +1,8 @@
 package com.substring.foodies.controller;
 
 import com.substring.foodies.dto.RestaurantDto;
+import com.substring.foodies.exception.ResourceNotFound;
+import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.service.RestaurantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +35,9 @@ public class RestaurantController {
 
     @Autowired
     private RestaurantService restaurantService;
+
+    @Autowired
+    private RestaurantRepository restaurantRepository;
 
     private Logger logger= LoggerFactory.getLogger(RestaurantController.class);
 
@@ -112,13 +117,6 @@ public class RestaurantController {
         return new ResponseEntity<>(restaurants, HttpStatus.OK);
     }
 
-    @GetMapping("/name")
-    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
-    public ResponseEntity<List<RestaurantDto>> findRestaurantsByName(@RequestParam(value="name") String name)
-    {
-        List<RestaurantDto> restaurants = restaurantService.findRestaurantByName(name);
-        return new ResponseEntity<>(restaurants, HttpStatus.OK);
-    }
 
     @PutMapping("/{id}")
     public ResponseEntity<RestaurantDto> updateRestaurant(@RequestBody RestaurantDto restaurantDto, @PathVariable String id)

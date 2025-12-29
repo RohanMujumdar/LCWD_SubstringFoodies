@@ -149,14 +149,7 @@ public class RestaurantServiceImpl implements RestaurantService{
         Restaurant updatedRestaurant = restaurantRepository.save(restaurant);
 
         // Convert the updated entity back to a DTO
-        return converter.restoEntityToDto(updatedRestaurant);
-    }
-
-    @Override
-    public List<RestaurantDto> findRestaurantByName(String name) {
-        List<Restaurant> restaurantList = restaurantRepository.findByNameContainingIgnoreCase(name);
-
-        return converter.restoEntityToDto(restaurantList);
+        return modelMapper.map(updatedRestaurant, RestaurantDto.class);
     }
 
     @Override
@@ -178,6 +171,9 @@ public class RestaurantServiceImpl implements RestaurantService{
 
     @Override
     public void deleteRestaurant(String id) {
+        if (!restaurantRepository.existsById(id)) {
+            throw new ResourceNotFound("Restaurant not found with id = " + id);
+        }
         restaurantRepository.deleteById(id);
     }
 

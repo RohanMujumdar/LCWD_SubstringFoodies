@@ -110,7 +110,7 @@ public class FoodController {
 
     // ---------------- FILTERS ----------------
     @GetMapping("/restaurant/{restaurantId}/category/{categoryId}")
-    public ResponseEntity<List<FoodItemDetailsDto>> byCategory(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodByRestaurantAndCategory(
             @PathVariable String restaurantId,
             @PathVariable String categoryId) {
 
@@ -120,17 +120,17 @@ public class FoodController {
     }
 
     @GetMapping("/restaurant/{restaurantId}/subcategory/{subCategoryId}")
-    public ResponseEntity<List<FoodItemDetailsDto>> bySubCategory(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodByRestaurantAndSubCategory(
             @PathVariable String restaurantId,
             @PathVariable String subCategoryId) {
 
         return ResponseEntity.ok(
-                foodService.getFoodByRestaurantAndCategory(restaurantId, subCategoryId)
+                foodService.getFoodByRestaurantAndSubCategory(restaurantId, subCategoryId)
         );
     }
 
     @GetMapping("/restaurant/{restaurantId}/type/{type}")
-    public ResponseEntity<List<FoodItemDetailsDto>> byType(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodByRestaurantAndFoodType(
             @PathVariable String restaurantId,
             @PathVariable FoodType type) {
 
@@ -140,7 +140,7 @@ public class FoodController {
     }
 
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<FoodItemDetailsDto>> byFoodCategory(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodByCategory(
             @PathVariable String categoryId) {
 
         return ResponseEntity.ok(
@@ -149,7 +149,7 @@ public class FoodController {
     }
 
     @GetMapping("/subcategory/{subCategoryId}")
-    public ResponseEntity<List<FoodItemDetailsDto>> byFoodSubCategory(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodBySubCategory(
             @PathVariable String subCategoryId) {
 
         return ResponseEntity.ok(
@@ -158,7 +158,7 @@ public class FoodController {
     }
 
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<FoodItemDetailsDto>> byFoodType(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodByFoodType(
             @PathVariable FoodType type) {
 
         return ResponseEntity.ok(
@@ -167,7 +167,7 @@ public class FoodController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<FoodItemDetailsDto>> byName(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodByName(
             @RequestParam String name) {
 
         return ResponseEntity.ok(
@@ -176,7 +176,7 @@ public class FoodController {
     }
 
     @GetMapping("/restaurant/{restaurantId}/search")
-    public ResponseEntity<List<FoodItemDetailsDto>> byRestaurantAndName(
+    public ResponseEntity<List<FoodItemDetailsDto>> getFoodByRestaurantAndName(
             @PathVariable String restaurantId,
             @RequestParam String name) {
 

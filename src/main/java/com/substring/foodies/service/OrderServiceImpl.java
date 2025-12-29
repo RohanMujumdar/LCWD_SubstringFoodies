@@ -11,6 +11,7 @@ import com.substring.foodies.repository.CartRepository;
 import com.substring.foodies.repository.OrderRepository;
 import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 
 import org.modelmapper.ModelMapper;
@@ -46,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     private RestaurantRepository restaurantRepository;
 
     @Override
+    @Transactional
     public OrderDto placeOrderRequest(OrderPlaceRequest orderPlaceRequest) {
 
         User user = userRepository.findById(orderPlaceRequest.getUserId())
@@ -56,7 +58,7 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFound(String.format("Restaurant not found with id = %s", orderPlaceRequest.getRestaurantId())));
 
         List<CartItems> cartItems = cart.getCartItems();
-        System.out.println("size of the cart: " + cartItems.size());
+
         if (cartItems.isEmpty()) {
             throw new IllegalStateException("Cart is empty");
         }
@@ -101,7 +103,6 @@ public class OrderServiceImpl implements OrderService {
         order.setTotalAmount(totalAmount.get());
         order.setOrderItemList(orderItems);
         orderRepository.save(order);
-        System.out.println("Saved Successfully");
         // Clear user's cart
         cartService.clearCart(orderPlaceRequest.getUserId());
         return mapper.map(order, OrderDto.class);
@@ -150,15 +151,31 @@ public class OrderServiceImpl implements OrderService {
     public OrderDto cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFound(String.format("Order not found for orderId = %s", orderId)));
+
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Delivered orders cannot be cancelled");
+        }
+
+
         order.setStatus(OrderStatus.CANCELLED);
 
         LocalDateTime currentTime = LocalDateTime.now();
 
         long minutesPassed = Duration.between(order.getOrderedAt(), currentTime).toMinutes();
 
-        if(minutesPassed > 10)
+        if(minutesPassed <= 10)
         {
-            order.setPaymentStatus(PaymentStatus.REFUNDED);
+            if(order.getPaymentMode() == PaymentMode.CASH_ON_DELIVERY)
+            {
+                order.setPaymentStatus(PaymentStatus.NOT_PAID);
+            }
+            else {
+                order.setPaymentStatus(PaymentStatus.REFUNDED);
+            }
+        }
+        else
+        {
+            order.setPaymentStatus(PaymentStatus.NON_REFUNDABLE);
         }
 
         Order savedOrder = orderRepository.save(order);

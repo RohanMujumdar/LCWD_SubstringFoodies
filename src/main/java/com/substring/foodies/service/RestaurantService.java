@@ -31,8 +31,6 @@ public interface RestaurantService {
 
     List<RestaurantDto> getByOwner(String ownerId);
 
-    List<RestaurantDto> findRestaurantByName(String name);
-
     Page<RestaurantDto> findByFoodItemsList_Id(String foodId, Pageable pageable);
 
 }
