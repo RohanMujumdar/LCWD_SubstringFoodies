@@ -15,8 +15,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, String> 
 
     List<Restaurant> findByOwnerId(String ownerId);
 
-    @Query(value = "SELECT * FROM foodie_restaurant WHERE is_Open = true", nativeQuery = true)
-    Page<Restaurant> findAllOpenRestaurants(Pageable pageable);
+    Page<Restaurant> findByIsOpenTrue(Pageable pageable);
 
     List<Restaurant> findByNameContainingIgnoreCase(String pattern);
 

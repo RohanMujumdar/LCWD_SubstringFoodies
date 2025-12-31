@@ -46,5 +46,9 @@ restaurant:
   file:
     path: /app/uploads/restaurant_banner/
 
+food:
+  file:
+    path: /app/uploads/food_item_banner/
+
 server:
   port: 8062

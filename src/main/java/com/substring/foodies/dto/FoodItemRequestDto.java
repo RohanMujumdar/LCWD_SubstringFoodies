@@ -15,6 +15,9 @@ import java.util.Set;
 public class FoodItemRequestDto {
 
     @NotBlank
+    private String id;
+
+    @NotBlank
     private String name;
 
     private String description;

@@ -30,6 +30,12 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
     @Override
     public FoodSubCategoryDto create(FoodSubCategoryDto dto) {
 
+        if (foodSubCategoryRepository.existsById(dto.getId())) {
+            throw new IllegalStateException(
+                    "Food Sub Category already exists with id = " + dto.getId()
+            );
+        }
+
         if (dto.getName() == null || dto.getName().isBlank()) {
             throw new BadRequestException("Sub-category name is required");
         }

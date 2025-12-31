@@ -26,6 +26,12 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
     @Override
     public FoodCategoryDto create(FoodCategoryDto dto) throws BadRequestException {
 
+        if (foodCategoryRepository.existsById(dto.getId())) {
+            throw new IllegalStateException(
+                    "Food Category already exists with id = " + dto.getId()
+            );
+        }
+
         if (foodCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
             throw new BadRequestException(
                     "Food category already exists with name = " + dto.getName()

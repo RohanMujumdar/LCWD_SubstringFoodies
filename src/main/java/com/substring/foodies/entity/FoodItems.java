@@ -20,6 +20,7 @@ public class FoodItems extends BaseAuditableEntity{
     @Id
     private String id;
 
+    @Column(unique = true, nullable = false)
     private String name;
 
     private String description;
@@ -59,5 +60,18 @@ public class FoodItems extends BaseAuditableEntity{
     public int getDiscountPercentage() {
         if (price == 0) return 0;
         return (int) ((discountAmount * 100.0) / price);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof FoodItems)) return false;
+        FoodItems other = (FoodItems) o;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

@@ -7,15 +7,19 @@ import com.substring.foodies.dto.FoodItemsMenuDto;
 import com.substring.foodies.dto.enums.FoodType;
 import com.substring.foodies.service.FoodService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -25,10 +29,59 @@ public class FoodController {
     @Autowired
     private FoodService foodService;
 
+    @GetMapping("/{foodId}/image")
+    public ResponseEntity<Resource> getFoodImage(@PathVariable String foodId) {
+
+        Resource image = foodService.getFoodImage(foodId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(image);
+    }
+
+    // ===================== ADD IMAGE (POST) =====================
+    // Only adds image if none exists
+    @PostMapping("/{foodId}/image")
+    public ResponseEntity<FoodItemDetailsDto> addFoodImage(
+            @PathVariable String foodId,
+            @RequestParam("image") MultipartFile image
+    ) throws IOException {
+
+        FoodItemDetailsDto response =
+                foodService.uploadFoodImage(image, foodId);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    // ===================== UPDATE IMAGE (PUT) =====================
+    // Replaces existing image
+    @PutMapping("/{foodId}/image")
+    public ResponseEntity<FoodItemDetailsDto> updateFoodImage(
+            @PathVariable String foodId,
+            @RequestParam("image") MultipartFile image
+    ) throws IOException {
+
+        FoodItemDetailsDto response =
+                foodService.updateFoodImage(image, foodId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    // ===================== DELETE IMAGE (DELETE) =====================
+    @DeleteMapping("/{foodId}/image")
+    public ResponseEntity<Void> deleteFoodImage(
+            @PathVariable String foodId
+    ) {
+        foodService.deleteFoodImage(foodId);
+        return ResponseEntity.noContent().build();
+    }
+
     // ---------------- CREATE ----------------
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
-    public ResponseEntity<FoodItemsMenuDto> addFood(
+    public ResponseEntity<FoodItemDetailsDto> addFood(
             @RequestBody FoodItemRequestDto dto) {
 
         return new ResponseEntity<>(
@@ -40,7 +93,7 @@ public class FoodController {
     // ---------------- UPDATE ----------------
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
-    public ResponseEntity<FoodItemsMenuDto> updateFood(
+    public ResponseEntity<FoodItemDetailsDto> updateFood(
             @RequestBody FoodItemRequestDto dto,
             @PathVariable String id) {
 
@@ -52,7 +105,7 @@ public class FoodController {
     // ---------------- PATCH (SCALARS ONLY) ----------------
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
-    public ResponseEntity<FoodItemsMenuDto> patchFood(
+    public ResponseEntity<FoodItemDetailsDto> patchFood(
             @PathVariable String id,
             @RequestBody FoodItemsMenuDto patchDto) {
 

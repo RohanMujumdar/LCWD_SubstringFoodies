@@ -102,6 +102,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto savedUser(UserDto userDto) {
 
+        if (userRepository.existsById(userDto.getId())) {
+            throw new IllegalStateException(
+                    "User already exists with id = " + userDto.getId()
+            );
+        }
+
         User savedUser = modelMapper.map(userDto, User.class);
         savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
 
@@ -164,6 +170,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto signUpUser(UserDto dto) {
+
+        if (userRepository.existsById(dto.getId())) {
+            throw new IllegalStateException(
+                    "User already exists with id = " + dto.getId()
+            );
+        }
 
         // 1️⃣ Validate address
         if (dto.getAddress() == null) {

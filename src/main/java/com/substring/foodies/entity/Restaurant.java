@@ -2,9 +2,7 @@ package com.substring.foodies.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Max;
 import lombok.*;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -67,4 +65,17 @@ public class Restaurant extends BaseAuditableEntity{
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Restaurant)) return false;
+        Restaurant other = (Restaurant) o;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

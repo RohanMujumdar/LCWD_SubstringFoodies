@@ -132,47 +132,61 @@ public class RestaurantController {
     }
 
     // API to handle restaurant banner;
-    @PostMapping("/upload-banner/{restaurantId}")
-    public ResponseEntity<?> uploadBanner(@RequestParam("banner") MultipartFile banner,
-                                          @PathVariable String restaurantId)
-    {
-        try
-        {
-            RestaurantDto restaurantDto = restaurantService.uploadBanner(banner, restaurantId);
-            return new ResponseEntity<>(restaurantDto, HttpStatus.OK);
-        }
-        catch(IOException e) {
-            throw new RuntimeException(e.getMessage());
-        }
+    @PostMapping("/uploadBanner/{restaurantId}")
+    public ResponseEntity<RestaurantDto> addBanner(
+            @PathVariable String restaurantId,
+            @RequestParam("banner") MultipartFile banner
+    ) throws IOException {
+
+        RestaurantDto dto =
+                restaurantService.uploadBanner(banner, restaurantId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
-    @DeleteMapping("/deleteBanner/{fileName}")
-    public void deleteBanner(@PathVariable String fileName)
-    {
-        String fullPath=path+fileName;
-        restaurantService.deleteBanner(fullPath);
+    // UPDATE banner
+    @PutMapping("/updateBanner/{restaurantId}")
+    public ResponseEntity<RestaurantDto> updateBanner(
+            @PathVariable String restaurantId,
+            @RequestParam("banner") MultipartFile banner
+    ) throws IOException {
+
+        RestaurantDto dto =
+                restaurantService.updateBanner(banner, restaurantId);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    @PatchMapping("/{restaurantId}")
+    public ResponseEntity<RestaurantDto> patchRestaurant(
+            @PathVariable String restaurantId,
+            @RequestBody RestaurantDto dto) {
+
+        return ResponseEntity.ok(
+                restaurantService.patchRestaurant(restaurantId, dto)
+        );
     }
 
 
-    @GetMapping("/{restaurantId}/banner")
-    public ResponseEntity<Resource> serveFile(@PathVariable String restaurantId) throws IOException
-    {
-        RestaurantDto restaurantDto=restaurantService.getRestaurantById(restaurantId);
-        String fileName=restaurantDto.getBanner();
-        String fullFilePath=path+fileName;
-        logger.info("File path = "+fullFilePath);
-
-        Path actualFilePath= Paths.get(fullFilePath);
-        Resource resource=new UrlResource(actualFilePath.toUri());
-        if(resource.exists())
-        {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_PNG)
-                    .body(resource);
-        }else {
-            throw new ResourceNotFound("File not found.");
-        }
+    @DeleteMapping("/deleteBanner/{restaurantId}")
+    public ResponseEntity<Void> deleteBanner(
+            @PathVariable String restaurantId
+    ) {
+        restaurantService.deleteBanner(restaurantId);
+        return ResponseEntity.noContent().build();
     }
+
+
+    @GetMapping("/getBanner/{restaurantId}")
+    public ResponseEntity<Resource> getBanner(@PathVariable String restaurantId) {
+
+        Resource banner = restaurantService.getRestaurantBanner(restaurantId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .body(banner);
+    }
+
 }
 
 

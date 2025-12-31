@@ -109,13 +109,8 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setStatus(HttpStatus.BAD_REQUEST);
 
-        if(ex.getMessage().contains("Duplicate entry"))
-        {
-            errorResponse.setMessage("User already exist");
-        }
-        else {
-            errorResponse.setMessage(ex.getMessage());
-        }
+        errorResponse.setMessage("Duplicate data detected. One of the provided fields must be unique.");
+
 
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
@@ -203,6 +198,16 @@ public class GlobalExceptionHandler {
                                     .message(ex.getMessage())
                                     .status(HttpStatus.BAD_REQUEST)
                                     .build();
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<?> handleIllegalStateException(IllegalStateException ex)
+    {
+        ErrorResponse response = ErrorResponse.builder()
+                .message(ex.getMessage())
+                .status(HttpStatus.BAD_REQUEST)
+                .build();
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 }

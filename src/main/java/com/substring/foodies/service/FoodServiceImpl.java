@@ -16,10 +16,19 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @Slf4j
@@ -41,6 +50,12 @@ public class FoodServiceImpl implements FoodService {
     @Autowired
     private FoodSubCategoryRepository foodSubCategoryRepository;
 
+    @Autowired
+    private FileService fileService;
+
+    @Value("${food.file.path}")
+    private String bannerFolderpath;
+
     // ===================== HELPERS =====================
 
     private void validateRestaurant(String restaurantId) {
@@ -52,24 +67,38 @@ public class FoodServiceImpl implements FoodService {
     // ===================== CREATE =====================
 
     @Override
-    public FoodItemsMenuDto addFood(FoodItemRequestDto dto) {
+    @Transactional
+    public FoodItemDetailsDto addFood(FoodItemRequestDto dto) {
+
+        if (foodItemRepository.existsById(dto.getId())) {
+            throw new IllegalStateException(
+                    "Food item already exists with id = " + dto.getId()
+            );
+        }
 
         FoodCategory category = foodCategoryRepository
                 .findById(dto.getFoodCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food category not found with id = " + dto.getFoodCategoryId()));
+                        new ResourceNotFound("Food category not found"));
 
         FoodSubCategory subCategory = foodSubCategoryRepository
                 .findById(dto.getFoodSubCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food subcategory not found with id = " + dto.getFoodSubCategoryId()));
+                        new ResourceNotFound("Food subcategory not found"));
 
         if (!subCategory.getFoodCategory().getId().equals(category.getId())) {
             throw new FoodCategoryException("SubCategory does not belong to category");
         }
 
+        // 1️⃣ Create FoodItems
         FoodItems foodItem = modelMapper.map(dto, FoodItems.class);
+        foodItem.setFoodCategory(category);
+        foodItem.setFoodSubCategory(subCategory);
 
+        // 2️⃣ SAVE FOOD FIRST (IMPORTANT)
+        FoodItems savedFood = foodItemRepository.save(foodItem);
+
+        // 3️⃣ Fetch restaurants
         List<Restaurant> restaurants =
                 restaurantRepository.findAllById(dto.getRestaurantIds());
 
@@ -77,22 +106,23 @@ public class FoodServiceImpl implements FoodService {
             throw new ResourceNotFound("One or more restaurants not found");
         }
 
+        // 4️⃣ Attach relations
         restaurants.forEach(resto -> {
-            resto.getFoodItemsList().add(foodItem);
-            foodItem.getRestaurants().add(resto);
+            resto.getFoodItemsList().add(savedFood);
+            savedFood.getRestaurants().add(resto);
         });
 
-        foodItem.setFoodCategory(category);
-        foodItem.setFoodSubCategory(subCategory);
+        // 5️⃣ Save again to sync relations
+        foodItemRepository.save(savedFood);
 
-        FoodItems saved = foodItemRepository.save(foodItem);
-        return modelMapper.map(saved, FoodItemsMenuDto.class);
+        return modelMapper.map(savedFood, FoodItemDetailsDto.class);
     }
+
 
     // ===================== UPDATE =====================
 
     @Override
-    public FoodItemsMenuDto updateFood(FoodItemRequestDto dto, String foodId) {
+    public FoodItemDetailsDto updateFood(FoodItemRequestDto dto, String foodId) {
 
         FoodItems food = foodItemRepository.findById(foodId)
                 .orElseThrow(() ->
@@ -103,7 +133,6 @@ public class FoodServiceImpl implements FoodService {
         food.setPrice(dto.getPrice());
         food.setIsAvailable(dto.getIsAvailable());
         food.setFoodType(dto.getFoodType());
-        food.setImageUrl(dto.getImageUrl());
         food.setDiscountAmount(dto.getDiscountAmount());
 
         FoodCategory category = foodCategoryRepository
@@ -124,13 +153,13 @@ public class FoodServiceImpl implements FoodService {
         food.setFoodSubCategory(subCategory);
 
         FoodItems updated = foodItemRepository.save(food);
-        return modelMapper.map(updated, FoodItemsMenuDto.class);
+        return modelMapper.map(updated, FoodItemDetailsDto.class);
     }
 
     // ===================== PATCH =====================
 
     @Override
-    public FoodItemsMenuDto patchFood(String foodId, FoodItemsMenuDto patchDto) {
+    public FoodItemDetailsDto patchFood(String foodId, FoodItemsMenuDto patchDto) {
 
         FoodItems food = foodItemRepository.findById(foodId)
                 .orElseThrow(() ->
@@ -141,22 +170,168 @@ public class FoodServiceImpl implements FoodService {
         if (patchDto.getPrice() > 0) food.setPrice(patchDto.getPrice());
         if (patchDto.getIsAvailable() != null) food.setIsAvailable(patchDto.getIsAvailable());
         if (patchDto.getFoodType() != null) food.setFoodType(patchDto.getFoodType());
-        if (patchDto.getImageUrl() != null) food.setImageUrl(patchDto.getImageUrl());
-        if (patchDto.getDiscountAmount() >= 0) food.setDiscountAmount(patchDto.getDiscountAmount());
+        if (patchDto.getDiscountAmount() > 0) food.setDiscountAmount(patchDto.getDiscountAmount());
 
         FoodItems updated = foodItemRepository.save(food);
-        return modelMapper.map(updated, FoodItemsMenuDto.class);
+        return modelMapper.map(updated, FoodItemDetailsDto.class);
     }
+
+    @Override
+    public Resource getFoodImage(String foodId) {
+
+        FoodItems food = foodItemRepository.findById(foodId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + foodId));
+
+        if (food.getImageUrl() == null) {
+            throw new ResourceNotFound("Food image not found");
+        }
+
+        Path imagePath = Paths.get(bannerFolderpath)
+                .resolve(food.getImageUrl())
+                .normalize();
+
+        try {
+            Resource resource = new UrlResource(imagePath.toUri());
+
+            if (!resource.exists()) {
+                throw new ResourceNotFound("Food image file not found");
+            }
+
+            return resource;
+
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Invalid food image path", e);
+        }
+    }
+
+    @Override
+    public FoodItemDetailsDto uploadFoodImage(MultipartFile file, String id) throws IOException {
+        FoodItems foodItem = foodItemRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + id));
+
+        if (foodItem.getImageUrl() != null) {
+            throw new IllegalStateException(
+                    "Image already exists. Use UPDATE image API to update the image.");
+        }
+
+        String fileName = file.getOriginalFilename();
+
+        if (fileName == null || !fileName.contains(".")) {
+            throw new IllegalArgumentException("Invalid file name");
+        }
+
+        String extension = fileName.substring(fileName.lastIndexOf('.'));
+        String newFileName = System.currentTimeMillis() + extension;
+
+        if (foodItem.getImageUrl() != null) {
+            Path oldFilePath = Paths.get(bannerFolderpath)
+                    .resolve(foodItem.getImageUrl())
+                    .normalize();
+            Files.deleteIfExists(oldFilePath);
+        }
+
+
+        FileData fileData = fileService.uploadFile(file, bannerFolderpath + newFileName);
+        foodItem.setImageUrl(fileData.getFileName());
+
+        foodItemRepository.save(foodItem);
+        return modelMapper.map(foodItem, FoodItemDetailsDto.class);
+    }
+
+    @Override
+    @Transactional
+    public FoodItemDetailsDto updateFoodImage(MultipartFile file, String foodId) throws IOException {
+
+        FoodItems food = foodItemRepository.findById(foodId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + foodId));
+
+        if (food.getImageUrl() == null) {
+            throw new IllegalStateException(
+                    "No image exists. Use ADD image API first.");
+        }
+
+        // delete old image
+        Path oldPath = Paths.get(bannerFolderpath)
+                .resolve(food.getImageUrl())
+                .normalize();
+        Files.deleteIfExists(oldPath);
+
+        String fileName = file.getOriginalFilename();
+        String extension = fileName.substring(fileName.lastIndexOf('.'));
+        String newFileName = System.currentTimeMillis() + extension;
+
+        FileData fileData = fileService.uploadFile(file, bannerFolderpath + newFileName);
+        food.setImageUrl(fileData.getFileName());
+
+        foodItemRepository.save(food);
+        return modelMapper.map(food, FoodItemDetailsDto.class);
+    }
+
+
+    @Override
+    @Transactional
+    public void deleteFoodImage(String foodId) {
+
+        FoodItems food = foodItemRepository.findById(foodId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + foodId));
+
+        if (food.getImageUrl() == null) {
+            return; // nothing to delete
+        }
+
+        try {
+            Path imagePath = Paths.get(bannerFolderpath)
+                    .resolve(food.getImageUrl())
+                    .normalize();
+
+            Files.deleteIfExists(imagePath);
+
+            food.setImageUrl(null);
+            foodItemRepository.save(food);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete food image", e);
+        }
+    }
+
 
     // ===================== DELETE =====================
 
     @Override
+    @Transactional
     public void deleteFood(String foodId) {
-        if (!foodItemRepository.existsById(foodId)) {
-            throw new ResourceNotFound("Food item not found with id = " + foodId);
+
+        FoodItems food = foodItemRepository.findById(foodId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + foodId));
+
+        // ❌ Non-owning side → do NOT manage relationship
+        if (!food.getRestaurants().isEmpty()) {
+            throw new IllegalStateException(
+                    "Food item is linked to restaurants and cannot be deleted");
         }
-        foodItemRepository.deleteById(foodId);
+
+        // Delete image
+        if (food.getImageUrl() != null) {
+            try {
+                Path imagePath = Paths.get(bannerFolderpath)
+                        .resolve(food.getImageUrl())
+                        .normalize();
+                Files.deleteIfExists(imagePath);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to delete food image", e);
+            }
+        }
+
+        // ✅ Safe delete
+        foodItemRepository.delete(food);
     }
+
+
 
     // ===================== ADMIN =====================
 

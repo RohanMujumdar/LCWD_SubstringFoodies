@@ -29,4 +29,17 @@ public class Address extends BaseAuditableEntity{
 
     @ManyToMany(mappedBy = "addresses")
     private Set<Restaurant> restaurants = new HashSet<>();
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Address)) return false;
+        Address other = (Address) o;
+        return id != null && id.equals(other.getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

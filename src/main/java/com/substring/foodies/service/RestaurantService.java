@@ -2,6 +2,8 @@ package com.substring.foodies.service;
 
 import com.substring.foodies.dto.RestaurantDto;
 import com.substring.foodies.entity.Restaurant;
+
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +19,8 @@ public interface RestaurantService {
 
     RestaurantDto updateSavedRestaurant(RestaurantDto restaurantDto, String id);
 
+    RestaurantDto patchRestaurant(String restaurantId, RestaurantDto patchDto);
+
     RestaurantDto getRestaurantById (String id);
 
     void deleteRestaurant(String id);
@@ -25,9 +29,13 @@ public interface RestaurantService {
 
     List<RestaurantDto> findByNameContainingIgnoreCase(String pattern);
 
+    Resource getRestaurantBanner(String restaurantId);
+
     RestaurantDto uploadBanner(MultipartFile file, String id) throws IOException;
 
-    void deleteBanner(String path);
+    RestaurantDto updateBanner(MultipartFile file, String restaurantId) throws IOException;
+
+    void deleteBanner(String id);
 
     List<RestaurantDto> getByOwner(String ownerId);
 

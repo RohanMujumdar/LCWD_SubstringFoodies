@@ -4,6 +4,7 @@ import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.entity.Address;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.AddressRepository;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,14 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressDto createAddress(AddressDto addressDto) {
+
+        if (addressRepository.existsById(addressDto.getId())) {
+            throw new IllegalStateException(
+                    "Address already exists with id = " + addressDto.getId()
+            );
+        }
+
+
         Address address = modelMapper.map(addressDto, Address.class);
         Address saved = addressRepository.save(address);
         return modelMapper.map(saved, AddressDto.class);
@@ -87,15 +96,21 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @Transactional
     public void deleteAddress(String id) {
 
-        Address existingAddress = addressRepository
-                                    .findById(id)
-                                    .orElseThrow(()->new ResourceNotFound("Address not found with id = " + id));
-        if (!existingAddress.getRestaurants().isEmpty()) {
-            throw new IllegalStateException("Address is linked to restaurants");
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Address not found with id = " + id));
+
+        // ❌ Non-owning side → do NOT manage relationship
+        if (!address.getRestaurants().isEmpty()) {
+            throw new IllegalStateException(
+                    "Address is linked to restaurants and cannot be deleted");
         }
 
-        addressRepository.deleteById(id);
+        // ✅ Safe delete
+        addressRepository.delete(address);
     }
+
 }

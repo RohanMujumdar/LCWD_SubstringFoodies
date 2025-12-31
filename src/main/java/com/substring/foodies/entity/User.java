@@ -26,9 +26,11 @@ public class User extends BaseAuditableEntity{
     @Column(nullable = false)
     private String password;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
+    @Column(unique = true)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
