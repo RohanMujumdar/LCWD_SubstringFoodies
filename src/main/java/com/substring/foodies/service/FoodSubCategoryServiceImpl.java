@@ -2,6 +2,7 @@ package com.substring.foodies.service;
 
 import com.substring.foodies.dto.FoodSubCategoryDto;
 import com.substring.foodies.entity.FoodCategory;
+import com.substring.foodies.entity.FoodItems;
 import com.substring.foodies.entity.FoodSubCategory;
 import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
@@ -26,6 +27,14 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    private FoodSubCategory findAndValidate(String id)
+    {
+        FoodSubCategory foodSubCategory =  foodSubCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFound("Food Sub-category not found with id = " + id));
+
+        return foodSubCategory;
+    }
 
     @Override
     public FoodSubCategoryDto create(FoodSubCategoryDto dto) {
@@ -71,8 +80,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
 
     @Override
     public FoodSubCategoryDto getById(String id) {
-        FoodSubCategory subCategory = foodSubCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Sub-category not found with id = " + id));
+        FoodSubCategory subCategory = findAndValidate(id);
 
         return modelMapper.map(subCategory, FoodSubCategoryDto.class);
     }
@@ -96,10 +104,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
             throw new BadRequestException("Food category is required");
         }
 
-        FoodSubCategory subCategory = foodSubCategoryRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Sub-category not found with id = " + id)
-                );
+        FoodSubCategory subCategory = findAndValidate(id);
 
         String newName = dto.getName();
         String categoryId = dto.getFoodCategoryId();
@@ -115,9 +120,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
         }
 
         FoodCategory category = foodCategoryRepository.findById(categoryId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Category not found with id = " + categoryId)
-                );
+                .orElseThrow(() -> new ResourceNotFound("Category not found with id = " + categoryId));
 
         subCategory.setName(newName);
         subCategory.setFoodCategory(category);
@@ -133,10 +136,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
     @Override
     public FoodSubCategoryDto patch(String id, FoodSubCategoryDto dto) {
 
-        FoodSubCategory subCategory = foodSubCategoryRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Sub-category not found with id = " + id)
-                );
+        FoodSubCategory subCategory = findAndValidate(id);
 
         // patch name
         if (dto.getName() != null &&
@@ -177,8 +177,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
 
     @Override
     public void delete(String id) {
-        FoodSubCategory subCategory = foodSubCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Sub-category not found with id = " + id));
+        FoodSubCategory subCategory = findAndValidate(id);
 
         foodSubCategoryRepository.delete(subCategory);
     }

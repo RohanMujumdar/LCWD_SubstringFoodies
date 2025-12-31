@@ -21,11 +21,15 @@ public interface RestaurantService {
 
     RestaurantDto patchRestaurant(String restaurantId, RestaurantDto patchDto);
 
+    RestaurantDto addAddressesToRestaurant(String restoId, List<String> addressIds);
+
+    RestaurantDto removeAddressesFromRestaurant(String restoId, List<String> addressIds);
+
     RestaurantDto getRestaurantById (String id);
 
     void deleteRestaurant(String id);
 
-    Page<RestaurantDto> getAllOpenRestaurants(Pageable pageable);
+    List<RestaurantDto> getAllOpenRestaurants();
 
     List<RestaurantDto> findByNameContainingIgnoreCase(String pattern);
 
@@ -39,6 +43,6 @@ public interface RestaurantService {
 
     List<RestaurantDto> getByOwner(String ownerId);
 
-    Page<RestaurantDto> findByFoodItemsList_Id(String foodId, Pageable pageable);
+    List<RestaurantDto> findByFoodItemsList_Id(String foodId);
 
 }

@@ -54,12 +54,17 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new AccessDeniedException("Invalid session"));
     }
 
+    private User findAndValidate(String id)
+    {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFound("User not found with id = "+id));
+
+        return user;
+    }
 
     public UserDto updateUser(String userId, UserDto userDto) {
 
-        User existingUser = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("User not found with id = " + userId));
+        User existingUser = findAndValidate(userId);
 
         User loggedInUser = getLoggedInUser();
 
@@ -143,7 +148,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserById(String userId) {
 
-        User user = userRepository.findById(userId).orElseThrow(()->new ResourceNotFound(String.format("User not found with id = %s", userId)));
+        User user = findAndValidate(userId);
         UserDto userDto=modelMapper.map(user, UserDto.class);
         return userDto;
     }
@@ -160,9 +165,7 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("User not found with id = " + userId));
+        findAndValidate(userId);
 
         userRepository.deleteById(userId);
     }
@@ -212,9 +215,7 @@ public class UserServiceImpl implements UserService {
     public UserDto patchUser(String userId, UserDto patchDto) {
 
         User loggedInUser = getLoggedInUser();
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("User not found with id = " + userId));
+        User user = findAndValidate(userId);
 
         if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
                 !loggedInUser.getId().equals(userId)) {
@@ -266,9 +267,7 @@ public class UserServiceImpl implements UserService {
             throw new AccessDeniedException("Admin access required");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("User not found with id = " + userId));
+        User user = findAndValidate(userId);
 
         if (user.getRole() == Role.ROLE_ADMIN) {
             throw new AccessDeniedException("Cannot modify another admin");
@@ -281,9 +280,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void changePassword(String userId, ChangePasswordDto dto) {
 
-        User user = userRepository.findById(userId)
-                        .orElseThrow(()->new ResourceNotFound("User not found with = "+userId));
-
+        User user = findAndValidate(userId);
         User loggedInUser = getLoggedInUser();
 
         if (!loggedInUser.getId().equals(userId)) {

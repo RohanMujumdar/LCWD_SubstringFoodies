@@ -143,14 +143,14 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderDto trackOrder(String orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFound(String.format("Order not found for orderId = %s", orderId)));
+                .orElseThrow(() -> new ResourceNotFound("Order not found with id: " + orderId));
         return mapper.map(order, OrderDto.class);
     }
 
     @Override
     public OrderDto cancelOrder(String orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFound(String.format("Order not found for orderId = %s", orderId)));
+                .orElseThrow(() -> new ResourceNotFound("Order not found with id: " + orderId));
 
         if (order.getStatus() == OrderStatus.DELIVERED) {
             throw new IllegalStateException("Delivered orders cannot be cancelled");

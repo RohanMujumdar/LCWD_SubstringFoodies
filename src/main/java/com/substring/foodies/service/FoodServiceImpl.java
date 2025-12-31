@@ -2,16 +2,11 @@ package com.substring.foodies.service;
 
 import com.substring.foodies.dto.*;
 import com.substring.foodies.dto.enums.FoodType;
-import com.substring.foodies.entity.FoodCategory;
-import com.substring.foodies.entity.FoodItems;
-import com.substring.foodies.entity.FoodSubCategory;
-import com.substring.foodies.entity.Restaurant;
+import com.substring.foodies.dto.enums.Role;
+import com.substring.foodies.entity.*;
 import com.substring.foodies.exception.FoodCategoryException;
 import com.substring.foodies.exception.ResourceNotFound;
-import com.substring.foodies.repository.FoodCategoryRepository;
-import com.substring.foodies.repository.FoodItemRepository;
-import com.substring.foodies.repository.FoodSubCategoryRepository;
-import com.substring.foodies.repository.RestaurantRepository;
+import com.substring.foodies.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -21,6 +16,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,12 +48,22 @@ public class FoodServiceImpl implements FoodService {
     private FoodSubCategoryRepository foodSubCategoryRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private FileService fileService;
 
     @Value("${food.file.path}")
     private String bannerFolderpath;
 
     // ===================== HELPERS =====================
+    private FoodItems findAndValidate(String id)
+    {
+        FoodItems foodItem = foodItemRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Food item not found with id = " + id));
+        return foodItem;
+    }
 
     private void validateRestaurant(String restaurantId) {
         if (!restaurantRepository.existsById(restaurantId)) {
@@ -64,6 +71,15 @@ public class FoodServiceImpl implements FoodService {
         }
     }
 
+    private User getLoggedInUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AccessDeniedException("Invalid session"));
+    }
     // ===================== CREATE =====================
 
     @Override
@@ -124,9 +140,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     public FoodItemDetailsDto updateFood(FoodItemRequestDto dto, String foodId) {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         food.setName(dto.getName());
         food.setDescription(dto.getDescription());
@@ -179,9 +193,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     public Resource getFoodImage(String foodId) {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         if (food.getImageUrl() == null) {
             throw new ResourceNotFound("Food image not found");
@@ -244,9 +256,7 @@ public class FoodServiceImpl implements FoodService {
     @Transactional
     public FoodItemDetailsDto updateFoodImage(MultipartFile file, String foodId) throws IOException {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         if (food.getImageUrl() == null) {
             throw new IllegalStateException(
@@ -275,9 +285,7 @@ public class FoodServiceImpl implements FoodService {
     @Transactional
     public void deleteFoodImage(String foodId) {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         if (food.getImageUrl() == null) {
             return; // nothing to delete
@@ -305,9 +313,7 @@ public class FoodServiceImpl implements FoodService {
     @Transactional
     public void deleteFood(String foodId) {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         // ❌ Non-owning side → do NOT manage relationship
         if (!food.getRestaurants().isEmpty()) {
@@ -344,9 +350,7 @@ public class FoodServiceImpl implements FoodService {
 
     @Override
     public FoodItemDetailsDto getFoodById(String foodId) {
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
         return modelMapper.map(food, FoodItemDetailsDto.class);
     }
 
@@ -508,9 +512,7 @@ public class FoodServiceImpl implements FoodService {
     @Transactional
     public void addRestoForFood(String foodId, List<String> restaurantIds) {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
 
@@ -518,7 +520,27 @@ public class FoodServiceImpl implements FoodService {
             throw new ResourceNotFound("One or more restaurants not found");
         }
 
-        restaurants.forEach(resto -> resto.getFoodItemsList().add(food));
+        User user = getLoggedInUser();
+
+        if(user.getRole() == Role.ROLE_RESTAURANT_ADMIN)
+        {
+            for(Restaurant resto: restaurants)
+            {
+                if(!resto.getOwner().getId().equals(user.getId()))
+                {
+                    throw new AccessDeniedException(
+                            "You are not authorized to perform this action. " +
+                                    "Only the restaurant owner or an admin can perform this action."
+                    );
+                }
+            }
+        }
+
+        restaurants.forEach(resto -> {
+                    resto.getFoodItemsList().add(food);
+                    food.getRestaurants().add(resto);
+        });
+
         restaurantRepository.saveAll(restaurants);
     }
 
@@ -526,9 +548,7 @@ public class FoodServiceImpl implements FoodService {
     @Transactional
     public void deleteRestoForFood(String foodId, List<String> restaurantIds) {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         List<Restaurant> restaurants = restaurantRepository.findAllById(restaurantIds);
 
@@ -536,7 +556,26 @@ public class FoodServiceImpl implements FoodService {
             throw new ResourceNotFound("One or more restaurants not found");
         }
 
-        restaurants.forEach(resto -> resto.getFoodItemsList().remove(food));
+        User user = getLoggedInUser();
+
+        if(user.getRole() == Role.ROLE_RESTAURANT_ADMIN)
+        {
+            for(Restaurant resto: restaurants)
+            {
+                if(!resto.getOwner().getId().equals(user.getId()))
+                {
+                    throw new AccessDeniedException(
+                            "You are not authorized to perform this action. " +
+                                    "Only the restaurant owner or an admin can perform this action."
+                    );
+                }
+            }
+        }
+        restaurants.forEach(resto -> {
+            resto.getFoodItemsList().remove(food);
+            food.getRestaurants().remove(resto);
+        });
+
         restaurantRepository.saveAll(restaurants);
     }
 
@@ -550,9 +589,7 @@ public class FoodServiceImpl implements FoodService {
             throw new IllegalArgumentException("Rating must be between 0 and 5");
         }
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
         food.setRating(rating);
         foodItemRepository.save(food);

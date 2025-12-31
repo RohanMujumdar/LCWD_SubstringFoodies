@@ -38,6 +38,14 @@ public class CartServiceImpl implements CartService {
     private ModelMapper modelMapper;
 
     // ---------------- ADD ITEM ----------------
+    private Cart findAndValidate(String userId)
+    {
+        Cart cart = cartRepository.findByCreatorId(userId)
+                .orElseThrow(() -> new ResourceNotFound("Cart not found for userId = " + userId));
+
+        return cart;
+    }
+
     @Override
     @Transactional
     public CartDto addItemToCart(AddItemToCartRequest request) {
@@ -115,8 +123,7 @@ public class CartServiceImpl implements CartService {
     // ---------------- GET CART ----------------
     @Override
     public CartDto getCart(String userId) {
-        Cart cart = cartRepository.findByCreatorId(userId)
-                .orElseThrow(() -> new ResourceNotFound("Cart not found for userId = " + userId));
+        Cart cart = findAndValidate(userId);
         return modelMapper.map(cart, CartDto.class);
     }
 
@@ -125,9 +132,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDto removeItemFromCart(String cartItemId, String userId) {
 
-        Cart cart = cartRepository.findByCreatorId(userId)
-                .orElseThrow(() -> new ResourceNotFound("Cart not found for userId = " + userId));
-
+        Cart cart = findAndValidate(userId);
         Iterator<CartItems> iterator = cart.getCartItems().iterator();
         while (iterator.hasNext()) {
             CartItems item = iterator.next();
@@ -146,9 +151,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartDto reduceItemFromCart(String cartItemId, String userId) {
 
-        Cart cart = cartRepository.findByCreatorId(userId)
-                .orElseThrow(() -> new ResourceNotFound("Cart not found for userId = " + userId));
-
+        Cart cart = findAndValidate(userId);
         Iterator<CartItems> iterator = cart.getCartItems().iterator();
         while (iterator.hasNext()) {
             CartItems item = iterator.next();
@@ -168,9 +171,7 @@ public class CartServiceImpl implements CartService {
     // ---------------- GET CART ITEMS ----------------
     @Override
     public List<CartItemsDto> getCartItems(String userId) {
-        Cart cart = cartRepository.findByCreatorId(userId)
-                .orElseThrow(() -> new ResourceNotFound("Cart not found for userId = " + userId));
-
+        Cart cart = findAndValidate(userId);
         return cart.getCartItems()
                 .stream()
                 .map(item -> modelMapper.map(item, CartItemsDto.class))
@@ -181,9 +182,7 @@ public class CartServiceImpl implements CartService {
     @Override
     @Transactional
     public void clearCart(String userId) {
-        Cart cart = cartRepository.findByCreatorId(userId)
-                .orElseThrow(() -> new ResourceNotFound("Cart not found for userId = " + userId));
-
+        Cart cart = findAndValidate(userId);
         cart.getCartItems().clear();
         cartRepository.save(cart);
     }

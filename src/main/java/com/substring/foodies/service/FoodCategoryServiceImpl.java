@@ -1,6 +1,7 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.dto.FoodCategoryDto;
+import com.substring.foodies.entity.Cart;
 import com.substring.foodies.entity.FoodCategory;
 import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
@@ -22,6 +23,14 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    private FoodCategory findAndValidate(String id)
+    {
+        FoodCategory category = foodCategoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFound("Food category not found with id = " + id));
+
+        return category;
+    }
 
     @Override
     public FoodCategoryDto create(FoodCategoryDto dto) throws BadRequestException {
@@ -45,8 +54,7 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
 
     @Override
     public FoodCategoryDto getById(String id) {
-        FoodCategory category = foodCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Category not found"));
+        FoodCategory category = findAndValidate(id);
         return modelMapper.map(category, FoodCategoryDto.class);
     }
 
@@ -61,8 +69,7 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
     @Override
     public FoodCategoryDto update(String id, FoodCategoryDto dto) {
 
-        FoodCategory category = foodCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Category not found with id = " + id));
+        FoodCategory category = findAndValidate(id);
 
         // ✅ Name uniqueness check ONLY if name is changing
         if (dto.getName() != null &&
@@ -83,8 +90,7 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
     @Override
     public FoodCategoryDto patch(String id, FoodCategoryDto dto) {
 
-        FoodCategory category = foodCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Category not found with id = " + id));
+        FoodCategory category = findAndValidate(id);
 
         if (dto.getName() != null &&
                 !category.getName().equalsIgnoreCase(dto.getName()) &&
@@ -109,8 +115,7 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
 
     @Override
     public void delete(String id) {
-        FoodCategory category = foodCategoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Category not found"));
+        FoodCategory category = findAndValidate(id);
         foodCategoryRepository.delete(category);
     }
 }

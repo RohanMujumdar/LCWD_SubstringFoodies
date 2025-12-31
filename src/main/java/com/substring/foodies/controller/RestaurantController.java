@@ -78,31 +78,18 @@ public class RestaurantController {
         return new ResponseEntity<>(restaurantDtoList, HttpStatus.OK);
     }
 
-    @GetMapping("/food/{id}")
-    public ResponseEntity<Page<RestaurantDto>> getRestaurantsByFood(@RequestParam(value="page", required = false, defaultValue = "0") int page,
-                                                                    @RequestParam(value="size", required = false, defaultValue = "6") int size,
-                                                                    @RequestParam(value="sortBy", required = false, defaultValue = "rating") String sortBy,
-                                                                    @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir,
-                                                                    @PathVariable String id)
+    @GetMapping("/by-food/{id}")
+    public ResponseEntity<List<RestaurantDto>> getRestaurantsByFood(@PathVariable String id)
     {
-        Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
-        Pageable pageable= PageRequest.of(page, size, sort);
-
-        Page<RestaurantDto> restaurantDtoList=restaurantService.findByFoodItemsList_Id(id, pageable);
+        List<RestaurantDto> restaurantDtoList=restaurantService.findByFoodItemsList_Id(id);
         return new ResponseEntity<>(restaurantDtoList, HttpStatus.OK);
     }
 
     @GetMapping("/open")
-    public ResponseEntity<Page<RestaurantDto>> getAllOpenRestaurants(@RequestParam(value="page", required = false, defaultValue = "0") int page,
-                                                                     @RequestParam(value="size", required = false, defaultValue = "2") int size,
-                                                                     @RequestParam(value="sortBy", required = false, defaultValue = "rating") String sortBy,
-                                                                     @RequestParam(value="sortDir", required = false, defaultValue = "desc") String sortDir)
+    public ResponseEntity<List<RestaurantDto>> getAllOpenRestaurants()
 
     {
-        Sort sort=sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
-        Pageable pageable= PageRequest.of(page, size, sort);
-
-        Page<RestaurantDto> restaurantDtoList=restaurantService.getAllOpenRestaurants(pageable);
+        List<RestaurantDto> restaurantDtoList=restaurantService.getAllOpenRestaurants();
         return new ResponseEntity<>(restaurantDtoList, HttpStatus.OK);
     }
 
@@ -114,7 +101,6 @@ public class RestaurantController {
         return new ResponseEntity<>(restaurants, HttpStatus.OK);
     }
 
-
     @PutMapping("/{id}")
     public ResponseEntity<RestaurantDto> updateRestaurant(@RequestBody RestaurantDto restaurantDto, @PathVariable String id)
     {
@@ -122,6 +108,40 @@ public class RestaurantController {
         RestaurantDto restaurantDto1 = restaurantService.updateSavedRestaurant(restaurantDto, id);
 
         return new ResponseEntity<>(restaurantDto1, HttpStatus.OK);
+    }
+
+    // ✅ ADD addresses to restaurant
+    @PostMapping("/{restaurantId}/addresses")
+    public ResponseEntity<RestaurantDto> addAddressesToRestaurant(
+            @PathVariable String restaurantId,
+            @RequestBody List<String> addressIds
+    ) {
+        RestaurantDto updated = restaurantService
+                .addAddressesToRestaurant(restaurantId, addressIds);
+
+        return ResponseEntity.ok(updated);
+    }
+
+    // ✅ REMOVE addresses from restaurant
+    @DeleteMapping("/{restaurantId}/addresses")
+    public ResponseEntity<RestaurantDto> removeAddressesFromRestaurant(
+            @PathVariable String restaurantId,
+            @RequestBody List<String> addressIds
+    ) {
+        RestaurantDto updated = restaurantService
+                .removeAddressesFromRestaurant(restaurantId, addressIds);
+
+        return ResponseEntity.ok(updated);
+    }
+
+    @PatchMapping("/{restaurantId}")
+    public ResponseEntity<RestaurantDto> patchRestaurant(
+            @PathVariable String restaurantId,
+            @RequestBody RestaurantDto dto) {
+
+        return ResponseEntity.ok(
+                restaurantService.patchRestaurant(restaurantId, dto)
+        );
     }
 
     @DeleteMapping("/{id}")
@@ -155,16 +175,6 @@ public class RestaurantController {
                 restaurantService.updateBanner(banner, restaurantId);
 
         return ResponseEntity.ok(dto);
-    }
-
-    @PatchMapping("/{restaurantId}")
-    public ResponseEntity<RestaurantDto> patchRestaurant(
-            @PathVariable String restaurantId,
-            @RequestBody RestaurantDto dto) {
-
-        return ResponseEntity.ok(
-                restaurantService.patchRestaurant(restaurantId, dto)
-        );
     }
 
 

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -67,11 +68,12 @@ public class FoodItems extends BaseAuditableEntity{
         if (this == o) return true;
         if (!(o instanceof FoodItems)) return false;
         FoodItems other = (FoodItems) o;
-        return id != null && id.equals(other.getId());
+        return id != null && id.equals(other.id);
     }
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(id);
     }
+
 }

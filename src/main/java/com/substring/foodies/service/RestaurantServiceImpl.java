@@ -1,6 +1,5 @@
 package com.substring.foodies.service;
 
-import com.substring.foodies.controller.RestaurantController;
 import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.dto.FileData;
 import com.substring.foodies.dto.RestaurantDto;
@@ -35,12 +34,9 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
 
 @Service
 public class RestaurantServiceImpl implements RestaurantService {
@@ -76,6 +72,14 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new AccessDeniedException("Invalid session"));
+    }
+
+    private Restaurant findAndValidate(String restaurantId)
+    {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() -> new ResourceNotFound("Restaurant not found with id = "+restaurantId));
+
+        return restaurant;
     }
 
     private User validateRestaurantOwner(String ownerId) {
@@ -151,7 +155,6 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         User owner = validateRestaurantOwner(restaurantDto.getOwnerId());
         restaurant.setOwner(owner);
-        restaurant.setOwner(owner);
 
         List<String> addressIds = restaurantDto.getAddresses()
                 .stream()
@@ -188,10 +191,9 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional
-    public RestaurantDto updateSavedRestaurant(RestaurantDto restaurantDto, String id) {
+    public RestaurantDto updateSavedRestaurant(RestaurantDto restaurantDto, String restaurantId) {
 
-        Restaurant restaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Restaurant not found"));
+        Restaurant restaurant = findAndValidate(restaurantId);
 
         validateRestaurantAccess(restaurant);
 
@@ -218,9 +220,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     public RestaurantDto patchRestaurant(String restaurantId, RestaurantDto patchDto) {
 
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Restaurant not found with id = " + restaurantId));
+        Restaurant restaurant = findAndValidate(restaurantId);
 
         validateRestaurantAccess(restaurant);
 
@@ -250,18 +250,73 @@ public class RestaurantServiceImpl implements RestaurantService {
         return modelMapper.map(updated, RestaurantDto.class);
     }
 
+    @Override
+    @Transactional
+    public RestaurantDto addAddressesToRestaurant(
+            String restaurantId,
+            List<String> addressIds
+    ) {
+
+        Restaurant restaurant = findAndValidate(restaurantId);
+        validateRestaurantAccess(restaurant);
+
+        List<Address> addresses = addressRepository.findAllById(addressIds);
+
+        Set<String> foundIds = addresses.stream()
+                .map(Address::getId)
+                .collect(Collectors.toSet());
+
+        List<String> missingIds = addressIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            throw new ResourceNotFound("Addresses not found with ids = " + missingIds);
+        }
+
+
+        for (Address addr : addresses) {
+            restaurant.getAddresses().add(addr);
+            addr.getRestaurants().add(restaurant);
+        }
+
+        return modelMapper.map(restaurant, RestaurantDto.class);
+    }
+
+    @Transactional
+    public RestaurantDto removeAddressesFromRestaurant(
+            String restaurantId,
+            List<String> addressIds
+    ) {
+        Restaurant restaurant = findAndValidate(restaurantId);
+        validateRestaurantAccess(restaurant);
+
+        Set<Address> toRemove = restaurant.getAddresses().stream()
+                .filter(a -> addressIds.contains(a.getId()))
+                .collect(Collectors.toSet());
+
+        for (Address addr : toRemove) {
+            restaurant.getAddresses().remove(addr);
+            addr.getRestaurants().remove(restaurant);
+        }
+
+        return modelMapper.map(restaurant, RestaurantDto.class);
+    }
+
 
     @Override
-    public Page<RestaurantDto> findByFoodItemsList_Id(String foodId, Pageable pageable) {
+    public List<RestaurantDto> findByFoodItemsList_Id(String foodId) {
         return restaurantRepository
-                .findByFoodItemsList_Id(foodId, pageable)
-                .map(resto->modelMapper.map(resto, RestaurantDto.class));
+                .findByFoodItemsList_IdOrderByRatingDesc(foodId)
+                .stream()
+                .map(resto->modelMapper.map(resto, RestaurantDto.class))
+                .toList();
     }
 
     @Override
     public RestaurantDto getRestaurantById(String id) {
-        Restaurant restaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Restaurant not found"));
+        Restaurant restaurant = findAndValidate(id);
+
         return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
@@ -269,8 +324,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     public void deleteRestaurant(String id) {
 
-        Restaurant restaurant = restaurantRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFound("Restaurant not found"));
+        Restaurant restaurant = findAndValidate(id);
 
         validateRestaurantAccess(restaurant);
 
@@ -290,13 +344,13 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
 
-
-
     @Override
-    public Page<RestaurantDto> getAllOpenRestaurants(Pageable pageable) {
+    public List<RestaurantDto> getAllOpenRestaurants() {
         return restaurantRepository
-                .findByIsOpenTrue(pageable)
-                .map(resto->modelMapper.map(resto, RestaurantDto.class));
+                .findByIsOpenTrue()
+                .stream()
+                .map(resto->modelMapper.map(resto, RestaurantDto.class))
+                .toList();
     }
 
     @Override
@@ -310,9 +364,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public Resource getRestaurantBanner(String restaurantId) {
 
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Restaurant not found with id = " + restaurantId));
+        Restaurant restaurant = findAndValidate(restaurantId);
 
         if (restaurant.getBanner() == null) {
             throw new ResourceNotFound("Banner not found for restaurant");
@@ -338,9 +390,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     public RestaurantDto uploadBanner(MultipartFile file, String restaurantId) throws IOException {
 
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Restaurant not found with id = " + restaurantId));
+        Restaurant restaurant = findAndValidate(restaurantId);
+
+        validateRestaurantAccess(restaurant);
 
         if (restaurant.getBanner() != null) {
             throw new IllegalStateException(
@@ -362,9 +414,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     public RestaurantDto updateBanner(MultipartFile file, String restaurantId) throws IOException {
 
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Restaurant not found with id = " + restaurantId));
+        Restaurant restaurant = findAndValidate(restaurantId);
+
+        validateRestaurantAccess(restaurant);
 
         if (restaurant.getBanner() == null) {
             throw new IllegalStateException(
@@ -391,9 +443,9 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Transactional
     public void deleteBanner(String restaurantId) {
 
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Restaurant not found with id = " + restaurantId));
+        Restaurant restaurant = findAndValidate(restaurantId);
+
+        validateRestaurantAccess(restaurant);
 
         if (restaurant.getBanner() == null) {
             return;

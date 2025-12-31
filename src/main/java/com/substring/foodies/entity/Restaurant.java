@@ -4,10 +4,7 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import lombok.*;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "foodie_restaurant")
@@ -47,7 +44,7 @@ public class Restaurant extends BaseAuditableEntity{
     @DecimalMin(value = "0.0")
     @DecimalMax(value = "5.0")
     @Column(name = "rating_star")
-    private Double rating;
+    private Double rating = 0.0;
 
     @ManyToMany
     @JoinTable(
@@ -76,6 +73,6 @@ public class Restaurant extends BaseAuditableEntity{
 
     @Override
     public int hashCode() {
-        return getClass().hashCode();
+        return Objects.hash(id);
     }
 }

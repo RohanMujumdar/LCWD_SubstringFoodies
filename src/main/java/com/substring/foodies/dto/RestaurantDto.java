@@ -22,7 +22,7 @@ public class RestaurantDto {
     private Set<AddressDto> addresses = new HashSet<>();
     private LocalTime openTime;
     private LocalTime closeTime;
-    private boolean isOpen=true;
+    private boolean isOpen = true;
     private boolean isActive = true;
     private String ownerId;
     private String banner;
