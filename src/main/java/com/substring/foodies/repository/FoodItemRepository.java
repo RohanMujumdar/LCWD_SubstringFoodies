@@ -73,4 +73,8 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, String> {
         where r.id = :restaurantId
     """)
     double avgRatingByRestaurant(@Param("restaurantId") String restaurantId);
+
+    boolean existsByNormalizedName(String normalizedName);
+
+    boolean existsByNormalizedNameAndIdNot(String normalizedName, String id);
 }

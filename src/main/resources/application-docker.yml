@@ -2,6 +2,10 @@ spring:
   application:
     name: lcwd_substringFoodies
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
   app:
     base-url: http://spring-web-service:8062
 
@@ -13,7 +17,7 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
@@ -31,9 +35,9 @@ spring:
 
 logging:
   level:
-    org:
-      springframework:
-        security: DEBUG
+    org.flywaydb: DEBUG
+    org.springframework.security: DEBUG
+
 
 razorpay:
   key_id: ${RAZORPAY_KEY_ID}

@@ -1,5 +1,6 @@
 package com.substring.foodies.service;
 
+import com.substring.foodies.Utility.Helper;
 import com.substring.foodies.dto.*;
 import com.substring.foodies.dto.enums.FoodType;
 import com.substring.foodies.dto.enums.Role;
@@ -27,6 +28,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+
+import static com.substring.foodies.Utility.Helper.normalize;
 
 @Slf4j
 @Service
@@ -92,6 +95,13 @@ public class FoodServiceImpl implements FoodService {
             );
         }
 
+        String normalized = normalize(dto.getName());
+        if (foodItemRepository.existsByNormalizedName(normalized)) {
+            throw new IllegalStateException(
+                    "Food item already exists with name = " + dto.getName()
+            );
+        }
+
         FoodCategory category = foodCategoryRepository
                 .findById(dto.getFoodCategoryId())
                 .orElseThrow(() ->
@@ -142,6 +152,13 @@ public class FoodServiceImpl implements FoodService {
 
         FoodItems food = findAndValidate(foodId);
 
+        String normalized = normalize(dto.getName());
+        if (foodItemRepository.existsByNormalizedNameAndIdNot(normalized, foodId)) {
+            throw new IllegalStateException(
+                    "Food item already exists with name = " + dto.getName()
+            );
+        }
+
         food.setName(dto.getName());
         food.setDescription(dto.getDescription());
         food.setPrice(dto.getPrice());
@@ -175,11 +192,20 @@ public class FoodServiceImpl implements FoodService {
     @Override
     public FoodItemDetailsDto patchFood(String foodId, FoodItemsMenuDto patchDto) {
 
-        FoodItems food = foodItemRepository.findById(foodId)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food not found with id = " + foodId));
+        FoodItems food = findAndValidate(foodId);
 
-        if (patchDto.getName() != null) food.setName(patchDto.getName());
+        if (patchDto.getName() != null)
+        {
+            String normalized = normalize(patchDto.getName());
+
+            if (foodItemRepository.existsByNormalizedNameAndIdNot(normalized, foodId)) {
+                throw new IllegalStateException(
+                        "Food item already exists with name = " + patchDto.getName()
+                );
+            }
+
+            food.setName(patchDto.getName());
+        }
         if (patchDto.getDescription() != null) food.setDescription(patchDto.getDescription());
         if (patchDto.getPrice() > 0) food.setPrice(patchDto.getPrice());
         if (patchDto.getIsAvailable() != null) food.setIsAvailable(patchDto.getIsAvailable());

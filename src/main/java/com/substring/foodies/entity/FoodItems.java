@@ -41,6 +41,13 @@ public class FoodItems extends BaseAuditableEntity{
 
     private String imageUrl;
 
+    @Column(
+            name = "normalized_name",
+            nullable = false,
+            updatable = false
+    )
+    private String normalizedName;
+
     @Min(0)
     private int discountAmount;
 
@@ -74,6 +81,14 @@ public class FoodItems extends BaseAuditableEntity{
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @PrePersist
+    @PreUpdate
+    private void normalizeName() {
+        this.normalizedName = name
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]", "");
     }
 
 }
