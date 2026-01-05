@@ -26,15 +26,6 @@ public class UserController {
         this.userService = userService;
     }
 
-    @PostMapping("/")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> create(@Valid @RequestBody UserDto userDto)
-    {
-        UserDto userDto1 = userService.savedUser(userDto);
-        return new ResponseEntity<>(userDto1, HttpStatus.CREATED);
-    }
-
-
     @GetMapping("/")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<UserDto>> getAllUsers(@RequestParam(value="page", required = false, defaultValue = "0") int page,
