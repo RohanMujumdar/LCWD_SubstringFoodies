@@ -5,6 +5,7 @@ import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.dto.ChangePasswordDto;
 import com.substring.foodies.dto.ChangeRoleDto;
 import com.substring.foodies.dto.UserDto;
+import com.substring.foodies.dto.enums.AddressType;
 import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.Address;
 import com.substring.foodies.entity.User;
@@ -12,6 +13,7 @@ import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,23 +105,6 @@ public class UserServiceImpl implements UserService {
         return modelMapper.map(updatedUser, UserDto.class);
     }
 
-
-    @Override
-    public UserDto savedUser(UserDto userDto) {
-
-        if (userRepository.existsById(userDto.getId())) {
-            throw new IllegalStateException(
-                    "User already exists with id = " + userDto.getId()
-            );
-        }
-
-        User savedUser = modelMapper.map(userDto, User.class);
-        savedUser.setPassword(passwordEncoder.encode(savedUser.getPassword()));
-
-
-        return modelMapper.map(userRepository.save(savedUser), UserDto.class);
-    }
-
     @Override
     public Page<UserDto> getAllUsers(Pageable page) {
         Page<User> userPage = userRepository.findAll(page);
@@ -205,7 +190,8 @@ public class UserServiceImpl implements UserService {
 
         // 3️⃣ Own the address
         Address address = user.getAddress();
-        address.setUser(user);   // one-to-one ownership
+        address.setUser(user);
+        address.setAddressType(AddressType.USER);// one-to-one ownership
 
         User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDto.class);
@@ -259,23 +245,49 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Override
+    @Transactional
     public void changeUserRole(String userId, ChangeRoleDto dto) {
 
         User admin = getLoggedInUser();
 
+        // 1️⃣ Only ADMIN can change roles
         if (admin.getRole() != Role.ROLE_ADMIN) {
             throw new AccessDeniedException("Admin access required");
         }
 
+        // 2️⃣ Role must be provided
+        if (dto.getRole() == null) {
+            throw new BadRequestException("Role cannot be null");
+        }
+
         User user = findAndValidate(userId);
 
-        if (user.getRole() == Role.ROLE_ADMIN) {
+        // 3️⃣ Cannot modify another ADMIN
+        if (user.getRole() == Role.ROLE_ADMIN && !admin.getId().equals(userId)) {
             throw new AccessDeniedException("Cannot modify another admin");
         }
 
+        // 4️⃣ Null-safe restaurant ownership check
+        boolean ownsRestaurant =
+                user.getRestaurantList() != null &&
+                        !user.getRestaurantList().isEmpty();
+
+        // 5️⃣ Restaurant owner downgrade protection
+        if (ownsRestaurant &&
+                (dto.getRole() == Role.ROLE_USER ||
+                        dto.getRole() == Role.ROLE_DELIVERY_BOY)) {
+
+            throw new BadRequestException(
+                    "Restaurant owner cannot be downgraded to USER or DELIVERY_BOY"
+            );
+        }
+
+        // 6️⃣ Apply role change
         user.setRole(dto.getRole());
         userRepository.save(user);
     }
+
 
     @Override
     public void changePassword(String userId, ChangePasswordDto dto) {

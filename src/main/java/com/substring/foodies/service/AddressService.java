@@ -4,6 +4,7 @@ import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.entity.Address;
 
 import java.util.List;
+import java.util.Set;
 
 public interface AddressService {
 
@@ -12,6 +13,8 @@ public interface AddressService {
     AddressDto getAddressById(String id);
 
     List<AddressDto> getAllAddresses();
+
+    Set<AddressDto> getAddressesByRestaurant(String restaurantId);
 
     AddressDto updateAddress(String id, AddressDto address);
 

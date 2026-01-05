@@ -1,4 +1,5 @@
 package com.substring.foodies.entity;
+import com.substring.foodies.dto.enums.AddressType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,6 +24,10 @@ public class Address extends BaseAuditableEntity{
 
     @OneToOne(mappedBy = "address")
     private User user;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private AddressType addressType;
 
     @ManyToMany(mappedBy = "addresses")
     private Set<Restaurant> restaurants = new HashSet<>();

@@ -1,5 +1,6 @@
 package com.substring.foodies.Utility;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -18,4 +19,7 @@ public class Helper {
         return name.toLowerCase().replaceAll("[^a-z0-9]", "");
     }
 
+    public static String hashToken(String token) {
+        return DigestUtils.sha256Hex(token);
+    }
 }

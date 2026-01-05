@@ -25,6 +25,8 @@ public interface RestaurantService {
 
     RestaurantDto removeAddressesFromRestaurant(String restoId, List<String> addressIds);
 
+    List<RestaurantDto> getRestaurantsByAddress(String addressId);
+
     RestaurantDto getRestaurantById (String id);
 
     void deleteRestaurant(String id);

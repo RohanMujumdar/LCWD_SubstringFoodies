@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/addresses")
@@ -36,6 +37,15 @@ public class AddressController {
     public ResponseEntity<List<AddressDto>> getAllAddresses() {
         List<AddressDto> addresses = addressService.getAllAddresses();
         return ResponseEntity.ok(addresses);
+    }
+
+    @GetMapping("/{restaurantId}/restaurants")
+    public ResponseEntity<Set<AddressDto>> getAddressesByRestaurant(
+            @PathVariable String restaurantId
+    ) {
+        return ResponseEntity.ok(
+                addressService.getAddressesByRestaurant(restaurantId)
+        );
     }
 
     // UPDATE (full replace)

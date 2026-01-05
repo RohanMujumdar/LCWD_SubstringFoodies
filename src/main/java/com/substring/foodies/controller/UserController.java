@@ -1,10 +1,10 @@
 package com.substring.foodies.controller;
 
-import com.substring.foodies.dto.ChangePasswordDto;
 import com.substring.foodies.dto.ChangeRoleDto;
 import com.substring.foodies.dto.ErrorResponse;
 import com.substring.foodies.dto.UserDto;
 import com.substring.foodies.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +28,7 @@ public class UserController {
 
     @PostMapping("/")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> create(@RequestBody UserDto userDto)
+    public ResponseEntity<UserDto> create(@Valid @RequestBody UserDto userDto)
     {
         UserDto userDto1 = userService.savedUser(userDto);
         return new ResponseEntity<>(userDto1, HttpStatus.CREATED);
@@ -67,7 +67,7 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateUserById(@PathVariable String id, @RequestBody UserDto userDto)
+    public ResponseEntity<?> updateUserById(@PathVariable String id, @Valid @RequestBody UserDto userDto)
     {
         if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
             ErrorResponse response = ErrorResponse.builder()

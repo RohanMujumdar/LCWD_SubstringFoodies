@@ -101,6 +101,16 @@ public class RestaurantController {
         return new ResponseEntity<>(restaurants, HttpStatus.OK);
     }
 
+    @GetMapping("/addresses/{addressId}/restaurants")
+    public ResponseEntity<List<RestaurantDto>> getRestaurantsByAddress(
+            @PathVariable String addressId
+    ) {
+        return ResponseEntity.ok(
+                restaurantService.getRestaurantsByAddress(addressId)
+        );
+    }
+
+
     @PutMapping("/{id}")
     public ResponseEntity<RestaurantDto> updateRestaurant(@RequestBody RestaurantDto restaurantDto, @PathVariable String id)
     {

@@ -3,11 +3,13 @@ package com.substring.foodies.service;
 import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.dto.FileData;
 import com.substring.foodies.dto.RestaurantDto;
+import com.substring.foodies.dto.enums.AddressType;
 import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.Address;
 import com.substring.foodies.entity.FoodItems;
 import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.entity.User;
+import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.AddressRepository;
 import com.substring.foodies.repository.FoodItemRepository;
@@ -34,6 +36,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -87,9 +90,10 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .orElseThrow(() ->
                         new ResourceNotFound("User not found with id = " + ownerId));
 
-        if (!owner.getRole().name().equals("ROLE_RESTAURANT_ADMIN")) {
+        if (!owner.getRole().name().equals("ROLE_RESTAURANT_ADMIN") &&
+                !owner.getRole().name().equals("ROLE_ADMIN")) {
             throw new IllegalStateException(
-                    "User is not authorized to own a restaurant");
+                    "User "+ownerId+" is not authorized to own a restaurant ");
         }
         return owner;
     }
@@ -97,6 +101,15 @@ public class RestaurantServiceImpl implements RestaurantService {
     private void validateRestaurantAccess(Restaurant restaurant) {
 
         User user = getLoggedInUser();
+
+        Role role = user.getRole();
+
+        // ❌ Only ADMIN or RESTAURANT_ADMIN allowed
+        if (role != Role.ROLE_ADMIN && role != Role.ROLE_RESTAURANT_ADMIN) {
+            throw new AccessDeniedException(
+                    "Access denied. Only ADMIN or RESTAURANT_ADMIN can manage restaurants."
+            );
+        }
 
         if (user.getRole() == Role.ROLE_RESTAURANT_ADMIN &&
                 !user.getId().equals(restaurant.getOwner().getId())) {
@@ -108,40 +121,6 @@ public class RestaurantServiceImpl implements RestaurantService {
         }
     }
 
-    private void syncRestaurantAddresses(Restaurant restaurant, Set<AddressDto> addressDtos) {
-
-        List<String> addressIds = addressDtos.stream()
-                .map(AddressDto::getId)
-                .toList();
-
-        List<Address> addressList = addressRepository.findAllById(addressIds);
-
-        Set<String> foundIds = addressList.stream()
-                .map(Address::getId)
-                .collect(Collectors.toSet());
-
-        List<String> missingIds = addressIds.stream()
-                .filter(id -> !foundIds.contains(id))
-                .toList();
-
-        if (!missingIds.isEmpty()) {
-            throw new ResourceNotFound("Addresses not found with ids = " + missingIds);
-        }
-
-        // Remove old relations
-        for (Address addr : restaurant.getAddresses()) {
-            addr.getRestaurants().remove(restaurant);
-        }
-        restaurant.getAddresses().clear();
-
-        // Add new relations
-        for (Address addr : addressList) {
-            restaurant.getAddresses().add(addr);
-            addr.getRestaurants().add(restaurant);
-        }
-    }
-
-
     @Override
     public RestaurantDto addRestaurant(RestaurantDto restaurantDto) {
 
@@ -152,6 +131,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         }
 
         Restaurant restaurant = modelMapper.map(restaurantDto, Restaurant.class);
+        restaurant.setRating(0.0);
 
         User owner = validateRestaurantOwner(restaurantDto.getOwnerId());
         restaurant.setOwner(owner);
@@ -175,6 +155,11 @@ public class RestaurantServiceImpl implements RestaurantService {
         }
 
         for (Address address : addressList) {
+
+            if(address.getAddressType() != AddressType.RESTAURANT)
+            {
+                throw new BadRequestException("Only restaurant addresses are allowed");
+            }
             restaurant.getAddresses().add(address);
             address.getRestaurants().add(restaurant);
         }
@@ -198,6 +183,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         validateRestaurantAccess(restaurant);
 
         restaurant.setName(restaurantDto.getName());
+        restaurant.setDescription(restaurantDto.getDescription());
         restaurant.setOpenTime(restaurantDto.getOpenTime());
         restaurant.setCloseTime(restaurantDto.getCloseTime());
         restaurant.setOpen(restaurantDto.isOpen());
@@ -208,8 +194,6 @@ public class RestaurantServiceImpl implements RestaurantService {
             User newOwner = validateRestaurantOwner(restaurantDto.getOwnerId());
             restaurant.setOwner(newOwner);
         }
-
-        syncRestaurantAddresses(restaurant, restaurantDto.getAddresses());
 
         Restaurant updated = restaurantRepository.save(restaurant);
         return modelMapper.map(updated, RestaurantDto.class);
@@ -276,6 +260,10 @@ public class RestaurantServiceImpl implements RestaurantService {
 
 
         for (Address addr : addresses) {
+            if(addr.getAddressType() != AddressType.RESTAURANT)
+            {
+                throw new BadRequestException("Only restaurant addresses are allowed");
+            }
             restaurant.getAddresses().add(addr);
             addr.getRestaurants().add(restaurant);
         }
@@ -320,6 +308,18 @@ public class RestaurantServiceImpl implements RestaurantService {
         return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
+    public List<RestaurantDto> getRestaurantsByAddress(String addressId) {
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new ResourceNotFound("Address not found with id = "+addressId));
+
+        return address.getRestaurants()
+                .stream()
+                .sorted(Comparator.comparing(Restaurant::getRating).reversed())
+                .map(r -> modelMapper.map(r, RestaurantDto.class))
+                .toList();
+    }
+
+
     @Override
     @Transactional
     public void deleteRestaurant(String id) {
@@ -347,7 +347,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     @Override
     public List<RestaurantDto> getAllOpenRestaurants() {
         return restaurantRepository
-                .findByIsOpenTrue()
+                .findByIsOpenTrueOrderByRatingDesc()
                 .stream()
                 .map(resto->modelMapper.map(resto, RestaurantDto.class))
                 .toList();
@@ -355,7 +355,7 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public List<RestaurantDto> findByNameContainingIgnoreCase(String pattern) {
-        return restaurantRepository.findByNameContainingIgnoreCase(pattern)
+        return restaurantRepository.findByNameContainingIgnoreCaseOrderByRatingDesc(pattern)
                 .stream()
                 .map(resto->modelMapper.map(resto, RestaurantDto.class))
                 .toList();

@@ -1,4 +1,5 @@
 package com.substring.foodies.dto;
+import com.substring.foodies.dto.enums.AddressType;
 import lombok.*;
 
 
@@ -14,4 +15,5 @@ public class AddressDto {
     private String state;
     private String pincode;
     private String country;
+    private AddressType addressType;
 }

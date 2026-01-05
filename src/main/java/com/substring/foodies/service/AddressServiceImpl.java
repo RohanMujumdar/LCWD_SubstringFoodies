@@ -2,20 +2,27 @@ package com.substring.foodies.service;
 
 import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.entity.Address;
+import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.AddressRepository;
+import com.substring.foodies.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class AddressServiceImpl implements AddressService {
 
     @Autowired
     private AddressRepository addressRepository;
+
+    @Autowired
+    private RestaurantRepository restaurantRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -51,6 +58,18 @@ public class AddressServiceImpl implements AddressService {
                 .map(address -> modelMapper.map(address, AddressDto.class))
                 .toList();
     }
+
+    public Set<AddressDto> getAddressesByRestaurant(String restaurantId) {
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Restaurant not found with id = "+restaurantId));
+
+        return restaurant.getAddresses()
+                .stream()
+                .map(a -> modelMapper.map(a, AddressDto.class))
+                .collect(Collectors.toSet());
+    }
+
 
     @Override
     public AddressDto updateAddress(String id, AddressDto addressDto) {
