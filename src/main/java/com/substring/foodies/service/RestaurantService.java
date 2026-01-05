@@ -21,6 +21,8 @@ public interface RestaurantService {
 
     RestaurantDto patchRestaurant(String restaurantId, RestaurantDto patchDto);
 
+    RestaurantDto addFoodItems(String restoId, List<String> foodIds);
+
     RestaurantDto addAddressesToRestaurant(String restoId, List<String> addressIds);
 
     RestaurantDto removeAddressesFromRestaurant(String restoId, List<String> addressIds);

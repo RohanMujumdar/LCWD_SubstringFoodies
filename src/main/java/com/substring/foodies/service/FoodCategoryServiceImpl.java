@@ -1,11 +1,11 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.dto.FoodCategoryDto;
-import com.substring.foodies.entity.Cart;
 import com.substring.foodies.entity.FoodCategory;
 import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.FoodCategoryRepository;
+import com.substring.foodies.repository.FoodItemRepository;
 import jakarta.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
@@ -20,6 +20,9 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
 
     @Autowired
     private FoodCategoryRepository foodCategoryRepository;
+
+    @Autowired
+    private FoodItemRepository foodItemRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -115,7 +118,19 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
 
     @Override
     public void delete(String id) {
+
         FoodCategory category = findAndValidate(id);
+
+        boolean hasFoods = foodItemRepository.existsByFoodCategoryId(id);
+        boolean hasSubCategories = !category.getFoodSubCategoryList().isEmpty();
+
+        if (hasFoods || hasSubCategories) {
+            throw new BadRequestException(
+                    "Deletion not allowed. This category contains sub-categories and/or food items. Please move or remove them before deleting the category."
+            );
+        }
+
         foodCategoryRepository.delete(category);
     }
+
 }

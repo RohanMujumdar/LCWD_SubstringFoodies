@@ -138,10 +138,13 @@ public class UserServiceImpl implements UserService {
         return userDto;
     }
 
+    @Override
+    @Transactional
     public void deleteUser(String userId) {
 
         User loggedInUser = getLoggedInUser();
 
+        // 🔐 Access control
         if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
                 !loggedInUser.getId().equals(userId)) {
 
@@ -150,10 +153,24 @@ public class UserServiceImpl implements UserService {
             );
         }
 
-        findAndValidate(userId);
+        User user = findAndValidate(userId);
 
-        userRepository.deleteById(userId);
+        // 🚨 Restaurant owner protection
+        if (user.getRole() == Role.ROLE_RESTAURANT_ADMIN) {
+
+            boolean ownsRestaurants =
+                    restaurantRepository.existsByOwnerId(user.getId());
+
+            if (ownsRestaurants) {
+                throw new BadRequestException(
+                        "Restaurant owner cannot be deleted. Transfer or deactivate restaurants first."
+                );
+            }
+        }
+
+        userRepository.delete(user);
     }
+
 
 
     @Override

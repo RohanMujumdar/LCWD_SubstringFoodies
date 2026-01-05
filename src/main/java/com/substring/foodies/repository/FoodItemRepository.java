@@ -29,6 +29,25 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, String> {
     """)
     List<FoodItems> findMenuByRestaurant(@Param("restaurantId") String restaurantId);
 
+    @Query("""
+    SELECT f FROM FoodItems f
+    JOIN f.restaurants r
+    WHERE (:restaurantId IS NULL OR r.id = :restaurantId)
+      AND (:categoryId IS NULL OR f.foodCategory.id = :categoryId)
+      AND (:subCategoryId IS NULL OR f.foodSubCategory.id = :subCategoryId)
+      AND (:foodType IS NULL OR f.foodType = :foodType)
+      AND (:isAvailable IS NULL OR f.isAvailable = :isAvailable)
+    ORDER BY f.rating DESC
+""")
+    List<FoodItems> search(
+            String restaurantId,
+            String categoryId,
+            String subCategoryId,
+            FoodType foodType,
+            Boolean isAvailable
+    );
+
+
 
     // ===================== RESTAURANT-SCOPED FILTERS =====================
 
@@ -77,4 +96,6 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, String> {
     boolean existsByNormalizedName(String normalizedName);
 
     boolean existsByNormalizedNameAndIdNot(String normalizedName, String id);
+
+    boolean existsByFoodCategoryId(String categoryId);
 }

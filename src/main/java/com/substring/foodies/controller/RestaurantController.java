@@ -132,6 +132,20 @@ public class RestaurantController {
         return ResponseEntity.ok(updated);
     }
 
+    @PostMapping("/{restoId}/foods")
+    public ResponseEntity<RestaurantDto> addFoodItemsToRestaurant(
+            @PathVariable String restoId,
+            @RequestBody List<String> foodIds
+    ) {
+
+        RestaurantDto updatedRestaurant =
+                restaurantService.addFoodItems(restoId, foodIds);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(updatedRestaurant);
+    }
+
     // ✅ REMOVE addresses from restaurant
     @DeleteMapping("/{restaurantId}/addresses")
     public ResponseEntity<RestaurantDto> removeAddressesFromRestaurant(

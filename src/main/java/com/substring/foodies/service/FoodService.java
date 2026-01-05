@@ -28,6 +28,8 @@ public interface FoodService {
 
     FoodItemDetailsDto updateFoodImage(MultipartFile file, String foodId) throws IOException;
 
+    FoodItemDetailsDto changeFoodCategory(String foodId, ChangeFoodCategoryDto dto);
+
     // ===================== DELETE =====================
 
     void deleteFood(String foodId);
@@ -73,6 +75,12 @@ public interface FoodService {
     List<FoodItemDetailsDto> getFoodByFoodType(FoodType foodType);
 
     List<FoodItemDetailsDto> searchFoodByName(String foodName);
+
+    List<FoodItemDetailsDto> searchFoods(String restaurantId,
+                                         String categoryId,
+                                         String subCategoryId,
+                                         FoodType foodType,
+                                         Boolean isAvailable);
 
     // ===================== RELATION MANAGEMENT =====================
 

@@ -30,7 +30,7 @@ public class User extends BaseAuditableEntity{
     @JoinColumn(name = "address_id", nullable = false)
     private Address address;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
@@ -38,13 +38,14 @@ public class User extends BaseAuditableEntity{
 
     private boolean isAvailable=true;
 
-    @OneToMany(mappedBy = "owner", orphanRemoval = true, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<Restaurant> restaurantList=new ArrayList<>();
+    @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
+    private List<Restaurant> restaurantList = new ArrayList<>();
+
 
     private boolean isEnabled=true;
 
     private String gender;
 
-    @OneToOne(mappedBy = "creator", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
 }

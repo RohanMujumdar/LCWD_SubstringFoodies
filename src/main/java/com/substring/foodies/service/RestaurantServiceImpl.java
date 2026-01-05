@@ -236,6 +236,38 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     @Transactional
+    public RestaurantDto addFoodItems(String restoId, List<String> foodIds) {
+
+        Restaurant restaurant = findAndValidate(restoId);
+        validateRestaurantAccess(restaurant); // if you already use this elsewhere
+
+        List<FoodItems> foodItems = foodItemRepository.findAllById(foodIds);
+
+        // 🔴 Validate missing food IDs
+        Set<String> foundIds = foodItems.stream()
+                .map(FoodItems::getId)
+                .collect(Collectors.toSet());
+
+        List<String> missingIds = foodIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            throw new ResourceNotFound("Food items not found with ids = " + missingIds);
+        }
+
+        // 🔗 Link food items with restaurant
+        for (FoodItems food : foodItems) {
+            restaurant.getFoodItemsList().add(food);
+            food.getRestaurants().add(restaurant); // only if bidirectional
+        }
+
+        return modelMapper.map(restaurant, RestaurantDto.class);
+    }
+
+
+    @Override
+    @Transactional
     public RestaurantDto addAddressesToRestaurant(
             String restaurantId,
             List<String> addressIds

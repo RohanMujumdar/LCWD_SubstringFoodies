@@ -2,7 +2,6 @@ package com.substring.foodies.service;
 
 import com.substring.foodies.dto.FoodSubCategoryDto;
 import com.substring.foodies.entity.FoodCategory;
-import com.substring.foodies.entity.FoodItems;
 import com.substring.foodies.entity.FoodSubCategory;
 import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
@@ -176,9 +175,18 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
 
 
     @Override
+    @Transactional
     public void delete(String id) {
-        FoodSubCategory subCategory = findAndValidate(id);
 
-        foodSubCategoryRepository.delete(subCategory);
+        FoodSubCategory subCategory = findAndValidate(id);
+        boolean hasFoodItems = !subCategory.getFoodItemList().isEmpty();
+
+        if (hasFoodItems) {
+            throw new BadRequestException(
+                    "Cannot delete sub-category. Move or delete food items first."
+            );
+        }
+
+        foodSubCategoryRepository.save(subCategory);
     }
 }

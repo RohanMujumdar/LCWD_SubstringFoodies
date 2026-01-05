@@ -15,6 +15,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, String> 
 
     List<Restaurant> findByOwnerId(String ownerId);
 
+    boolean existsByOwnerId(String ownerId);
+
     List<Restaurant> findByIsOpenTrueOrderByRatingDesc();
 
     List<Restaurant> findByNameContainingIgnoreCaseOrderByRatingDesc(String pattern);

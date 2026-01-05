@@ -1,6 +1,6 @@
 package com.substring.foodies.service;
 
-import com.substring.foodies.Utility.Helper;
+
 import com.substring.foodies.dto.*;
 import com.substring.foodies.dto.enums.FoodType;
 import com.substring.foodies.dto.enums.Role;
@@ -54,6 +54,9 @@ public class FoodServiceImpl implements FoodService {
     private UserRepository userRepository;
 
     @Autowired
+    private FoodRatingRepository foodRatingRepository;
+
+    @Autowired
     private FileService fileService;
 
     @Value("${food.file.path}")
@@ -105,12 +108,12 @@ public class FoodServiceImpl implements FoodService {
         FoodCategory category = foodCategoryRepository
                 .findById(dto.getFoodCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food category not found"));
+                        new ResourceNotFound("Food category not found with id = "+dto.getFoodCategoryId()));
 
         FoodSubCategory subCategory = foodSubCategoryRepository
                 .findById(dto.getFoodSubCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food subcategory not found"));
+                        new ResourceNotFound("Food subcategory not found with id = "+dto.getFoodSubCategoryId()));
 
         if (!subCategory.getFoodCategory().getId().equals(category.getId())) {
             throw new FoodCategoryException("SubCategory does not belong to category");
@@ -217,6 +220,29 @@ public class FoodServiceImpl implements FoodService {
     }
 
     @Override
+    @Transactional
+    public FoodItemDetailsDto changeFoodCategory(String foodId, ChangeFoodCategoryDto dto) {
+        FoodItems food = findAndValidate(foodId);
+
+        FoodCategory category = foodCategoryRepository
+                .findById(dto.getFoodCategoryId())
+                .orElseThrow(() -> new ResourceNotFound("Category not found"));
+
+        FoodSubCategory subCategory = foodSubCategoryRepository
+                .findById(dto.getFoodSubCategoryId())
+                .orElseThrow(() -> new ResourceNotFound("Subcategory not found"));
+
+        if (!subCategory.getFoodCategory().getId().equals(category.getId())) {
+            throw new FoodCategoryException("SubCategory does not belong to category");
+        }
+
+        food.setFoodCategory(category);
+        food.setFoodSubCategory(subCategory);
+        return modelMapper.map(foodItemRepository.save(food), FoodItemDetailsDto.class);
+    }
+
+
+    @Override
     public Resource getFoodImage(String foodId) {
 
         FoodItems food = findAndValidate(foodId);
@@ -245,9 +271,7 @@ public class FoodServiceImpl implements FoodService {
 
     @Override
     public FoodItemDetailsDto uploadFoodImage(MultipartFile file, String id) throws IOException {
-        FoodItems foodItem = foodItemRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFound("Food item not found with id = " + id));
+        FoodItems foodItem = findAndValidate(id);
 
         if (foodItem.getImageUrl() != null) {
             throw new IllegalStateException(
@@ -518,6 +542,25 @@ public class FoodServiceImpl implements FoodService {
                 .toList();
     }
 
+    public List<FoodItemDetailsDto> searchFoods(
+            String restaurantId,
+            String categoryId,
+            String subCategoryId,
+            FoodType foodType,
+            Boolean isAvailable
+    ) {
+        return foodItemRepository.search(
+                        restaurantId,
+                        categoryId,
+                        subCategoryId,
+                        foodType,
+                        isAvailable
+                ).stream()
+                .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
+                .toList();
+    }
+
+
     @Override
     public List<FoodItemDetailsDto> searchFoodByRestaurantAndName(
             String restaurantId, String foodName) {
@@ -611,15 +654,31 @@ public class FoodServiceImpl implements FoodService {
     @Transactional
     public void updateFoodRating(String foodId, double rating) {
 
-        if (rating < 0 || rating > 5) {
-            throw new IllegalArgumentException("Rating must be between 0 and 5");
+        if (rating < 1 || rating > 5) {
+            throw new IllegalArgumentException("Rating must be between 1 and 5");
         }
 
         FoodItems food = findAndValidate(foodId);
+        User user = getLoggedInUser();
 
-        food.setRating(rating);
+        FoodRating rat = foodRatingRepository
+                .findByUserIdAndFoodId(user.getId(), foodId)
+                .orElse(
+                        FoodRating.builder()
+                                .user(user)
+                                .food(food)
+                                .build()
+                );
+
+        rat.setRating(rating);
+        foodRatingRepository.save(rat);
+
+        // 🔁 Recalculate average
+        double avgRating = foodRatingRepository.averageRatingByFood(foodId);
+        food.setRating(avgRating);
         foodItemRepository.save(food);
 
+        // 🔁 Update restaurant ratings
         updateRestaurantRating(food.getRestaurants());
     }
 

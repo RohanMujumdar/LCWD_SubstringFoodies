@@ -1,11 +1,9 @@
 package com.substring.foodies.controller;
 
-import com.substring.foodies.dto.FoodCategoryDto;
-import com.substring.foodies.dto.FoodItemDetailsDto;
-import com.substring.foodies.dto.FoodItemRequestDto;
-import com.substring.foodies.dto.FoodItemsMenuDto;
+import com.substring.foodies.dto.*;
 import com.substring.foodies.dto.enums.FoodType;
 import com.substring.foodies.service.FoodService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -28,6 +26,27 @@ public class FoodController {
 
     @Autowired
     private FoodService foodService;
+
+
+    @GetMapping("/foods")
+    public ResponseEntity<List<FoodItemDetailsDto>> searchFoods(
+            @RequestParam(required = false) String restaurantId,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String subCategoryId,
+            @RequestParam(required = false) FoodType foodType,
+            @RequestParam(required = false) Boolean isAvailable
+    ) {
+        return ResponseEntity.ok(
+                foodService.searchFoods(
+                        restaurantId,
+                        categoryId,
+                        subCategoryId,
+                        foodType,
+                        isAvailable
+                )
+        );
+    }
+
 
     @GetMapping("/{foodId}/image")
     public ResponseEntity<Resource> getFoodImage(@PathVariable String foodId) {
@@ -102,6 +121,7 @@ public class FoodController {
         );
     }
 
+
     // ---------------- PATCH (SCALARS ONLY) ----------------
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
@@ -113,6 +133,19 @@ public class FoodController {
                 foodService.patchFood(id, patchDto)
         );
     }
+
+    @PatchMapping("/{foodId}/category")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
+    public ResponseEntity<FoodItemDetailsDto> changeFoodCategory(
+            @PathVariable String foodId,
+            @RequestBody @Valid ChangeFoodCategoryDto dto
+    ) {
+        FoodItemDetailsDto updatedFood =
+                foodService.changeFoodCategory(foodId, dto);
+
+        return ResponseEntity.ok(updatedFood);
+    }
+
 
     // ---------------- DELETE ----------------
     @DeleteMapping("/{id}")
