@@ -66,7 +66,7 @@ public class AddressServiceImpl implements AddressService {
 
         return restaurant.getAddresses()
                 .stream()
-                .map(a -> modelMapper.map(a, AddressDto.class))
+                .map(addr -> modelMapper.map(addr, AddressDto.class))
                 .collect(Collectors.toSet());
     }
 
@@ -125,7 +125,7 @@ public class AddressServiceImpl implements AddressService {
         // ❌ Non-owning side → do NOT manage relationship
         if (!address.getRestaurants().isEmpty()) {
             throw new IllegalStateException(
-                    "Address is linked to restaurants and cannot be deleted");
+                    "Address "+id+" is linked to restaurants and cannot be deleted. You must transfer the restaurants to a different address.");
         }
 
         // ✅ Safe delete

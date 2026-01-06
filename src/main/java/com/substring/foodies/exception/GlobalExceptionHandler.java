@@ -11,16 +11,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.validation.FieldError;
-
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.security.SignatureException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -64,11 +60,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NullPointerException.class)
-    public String handleNullPointerException(NullPointerException ex)
+    public ResponseEntity<ErrorResponse> handleNullPointerException(NullPointerException ex)
     {
-        logger.error(ex.getMessage());
-        ex.printStackTrace();
-        return "Your number is Null";
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.builder()
+                        .message("A null value was encountered while processing the request.")
+                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .build());
     }
 
     @ExceptionHandler(FileNotFoundException.class)
@@ -90,29 +89,21 @@ public class GlobalExceptionHandler {
 //    Exception handler in a Spring Boot application that catches validation errors
 //    when an incoming request fails @Valid validation.
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex)
-    {
-//        A HashMap is created to store field names as keys and validation error messages as values.
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException ex
+    ) {
         Map<String, String> errorMap = new HashMap<>();
 
-//        .getBindingResult fetches all the validation errors from the error message that we are getting
-//        Retrieves all validation errors as a list of ObjectError.
-        List<ObjectError> allErrors=ex.getBindingResult().getAllErrors();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error ->
+                        errorMap.put(error.getField(), error.getDefaultMessage())
+                );
 
-
-//        Iterates through each error.
-//        Casts ObjectError to FieldError to access the field name.
-//        Gets the field name (getField()) and error message (getDefaultMessage()).
-//        Stores them in errorMap.
-
-        allErrors.forEach(error -> {
-            String fieldName=((FieldError) error).getField();
-            String message=error.getDefaultMessage();
-            errorMap.put(fieldName, message);
-        });
-
-        return errorMap;
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(errorMap);
     }
+
 
 
     @ExceptionHandler(DataIntegrityViolationException.class)

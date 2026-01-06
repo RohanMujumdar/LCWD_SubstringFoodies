@@ -1,5 +1,6 @@
 package com.substring.foodies.repository;
 
+import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -12,5 +13,6 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     List<User> findByName(String userName);
     Optional<User> findByEmail(String userEmail);
+    int countByRole(Role role);
     boolean existsByEmail(String email);
 }

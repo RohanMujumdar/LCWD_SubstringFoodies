@@ -3,6 +3,7 @@ package com.substring.foodies.service;
 import com.substring.foodies.dto.ChangePasswordDto;
 import com.substring.foodies.dto.ChangeRoleDto;
 import com.substring.foodies.dto.UserDto;
+import com.substring.foodies.dto.UserPutDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -12,7 +13,7 @@ import java.util.List;
 
 public interface UserService {
 
-    UserDto updateUser(String id, UserDto userDto);
+    UserDto updateUser(String id, UserPutDto userDto);
 
     Page<UserDto> getAllUsers(Pageable pageable);
 
@@ -31,4 +32,6 @@ public interface UserService {
     void changeUserRole(String userId, ChangeRoleDto dto);
 
     void changePassword(String userId, ChangePasswordDto dto);
+
+    void changeAvailability(String userId);
 }

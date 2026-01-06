@@ -41,7 +41,6 @@ public class User extends BaseAuditableEntity{
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
     private List<Restaurant> restaurantList = new ArrayList<>();
 
-
     private boolean isEnabled=true;
 
     private String gender;

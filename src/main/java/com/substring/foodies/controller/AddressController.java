@@ -2,6 +2,7 @@ package com.substring.foodies.controller;
 
 import com.substring.foodies.dto.AddressDto;
 import com.substring.foodies.service.AddressService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,7 @@ public class AddressController {
     // CREATE
     @PostMapping
     public ResponseEntity<AddressDto> createAddress(
-            @RequestBody AddressDto addressDto) {
+            @Valid @RequestBody AddressDto addressDto) {
 
         AddressDto createdAddress = addressService.createAddress(addressDto);
         return ResponseEntity.status(201).body(createdAddress);
@@ -52,7 +53,7 @@ public class AddressController {
     @PutMapping("/{id}")
     public ResponseEntity<AddressDto> updateAddress(
             @PathVariable String id,
-            @RequestBody AddressDto addressDto) {
+            @Valid @RequestBody AddressDto addressDto) {
 
         AddressDto updatedAddress = addressService.updateAddress(id, addressDto);
         return ResponseEntity.ok(updatedAddress);

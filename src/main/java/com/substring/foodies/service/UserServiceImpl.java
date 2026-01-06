@@ -1,10 +1,7 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.controller.AuthController;
-import com.substring.foodies.dto.AddressDto;
-import com.substring.foodies.dto.ChangePasswordDto;
-import com.substring.foodies.dto.ChangeRoleDto;
-import com.substring.foodies.dto.UserDto;
+import com.substring.foodies.dto.*;
 import com.substring.foodies.dto.enums.AddressType;
 import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.Address;
@@ -20,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,7 +43,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private ModelMapper modelMapper;
 
-    private Logger logger= LoggerFactory.getLogger(AuthController.class);
+    private Logger logger= LoggerFactory.getLogger(UserServiceImpl.class);
 
     private User getLoggedInUser() {
         String email = SecurityContextHolder
@@ -64,26 +63,35 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    public UserDto updateUser(String userId, UserDto userDto) {
-
-        User existingUser = findAndValidate(userId);
+    @Override
+    public UserDto updateUser(String userId, UserPutDto userDto) {
 
         User loggedInUser = getLoggedInUser();
+        User existingUser = findAndValidate(userId);
 
-        if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
-                !loggedInUser.getId().equals(userId)) {
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+        boolean isSelf = loggedInUser.getId().equals(userId);
 
+        // 🔐 Access control
+        if (!isAdmin && !isSelf) {
             throw new AccessDeniedException(
                     "You can update only your own profile"
             );
         }
 
-        // ✅ Allowed profile fields only
+        // 🚫 Admin cannot update another admin
+        if (isAdmin && existingUser.getRole() == Role.ROLE_ADMIN && !isSelf) {
+            throw new AccessDeniedException(
+                    "You cannot update another administrator's profile"
+            );
+        }
+
+        // ✅ Allowed profile fields
         existingUser.setName(userDto.getName());
         existingUser.setPhoneNumber(userDto.getPhoneNumber());
         existingUser.setGender(userDto.getGender());
 
-        // ✅ Address update (NO addressId)
+        // ✅ Address update (upsert by design)
         if (userDto.getAddress() != null) {
             Address address = existingUser.getAddress();
             if (address == null) {
@@ -101,8 +109,7 @@ public class UserServiceImpl implements UserService {
             existingUser.setAddress(address);
         }
 
-        User updatedUser = userRepository.save(existingUser);
-        return modelMapper.map(updatedUser, UserDto.class);
+        return modelMapper.map(userRepository.save(existingUser), UserDto.class);
     }
 
     @Override
@@ -124,7 +131,7 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() ->
                         new ResourceNotFound(
-                                String.format("User not found with email = %s", userEmail)
+                                "User not found with email = "+userEmail
                         )
                 );
         return modelMapper.map(user, UserDto.class);
@@ -143,34 +150,45 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(String userId) {
 
         User loggedInUser = getLoggedInUser();
+        User user = findAndValidate(userId);
+
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+        boolean isSelf = loggedInUser.getId().equals(userId);
 
         // 🔐 Access control
-        if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
-                !loggedInUser.getId().equals(userId)) {
-
+        if (!isAdmin && !isSelf) {
             throw new AccessDeniedException(
-                    "You can delete only your own account"
+                    "You are not allowed to delete this account."
             );
         }
 
-        User user = findAndValidate(userId);
+        // 🚫 Admin cannot delete another admin
+        if (isAdmin && user.getRole() == Role.ROLE_ADMIN && !isSelf) {
+            throw new AccessDeniedException(
+                    "Administrators cannot delete other administrator accounts."
+            );
+        }
+
+        // 🚨 Prevent deleting the last admin
+        if (user.getRole() == Role.ROLE_ADMIN &&
+                userRepository.countByRole(Role.ROLE_ADMIN) == 1) {
+
+            throw new BadRequestException(
+                    "Cannot delete the last administrator account."
+            );
+        }
 
         // 🚨 Restaurant owner protection
-        if (user.getRole() == Role.ROLE_RESTAURANT_ADMIN) {
+        if (user.getRole() == Role.ROLE_RESTAURANT_ADMIN &&
+                restaurantRepository.existsByOwnerId(user.getId())) {
 
-            boolean ownsRestaurants =
-                    restaurantRepository.existsByOwnerId(user.getId());
-
-            if (ownsRestaurants) {
-                throw new BadRequestException(
-                        "Restaurant owner cannot be deleted. Transfer or deactivate restaurants first."
-                );
-            }
+            throw new BadRequestException(
+                    "This account owns one or more restaurants. Transfer or remove the restaurants before deleting the account."
+            );
         }
 
         userRepository.delete(user);
     }
-
 
 
     @Override
@@ -187,45 +205,36 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("Address is required");
         }
 
-        AddressDto addressDto = dto.getAddress();
-
-        if (addressDto.getAddressLine() == null || addressDto.getAddressLine().isBlank()) {
-            throw new BadRequestException("Address line is required");
-        }
-
-        if (addressDto.getCity() == null || addressDto.getCity().isBlank()) {
-            throw new BadRequestException("City is required");
-        }
-
-        if (addressDto.getPincode() == null || !addressDto.getPincode().matches("\\d{6}")) {
-            throw new BadRequestException("Invalid pincode");
-        }
 
         // 2️⃣ Map & save user
         User user = modelMapper.map(dto, User.class);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // 3️⃣ Own the address
-        Address address = user.getAddress();
+        Address address = modelMapper.map(dto.getAddress(), Address.class);
         address.setUser(user);
-        address.setAddressType(AddressType.USER);// one-to-one ownership
+        address.setAddressType(AddressType.USER);
+        user.setAddress(address);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDto.class);
     }
 
-
+    @Override
+    @Transactional
     public UserDto patchUser(String userId, UserDto patchDto) {
 
         User loggedInUser = getLoggedInUser();
         User user = findAndValidate(userId);
 
-        if (loggedInUser.getRole() != Role.ROLE_ADMIN &&
-                !loggedInUser.getId().equals(userId)) {
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+        boolean isSelf = loggedInUser.getId().equals(userId);
 
-            throw new AccessDeniedException(
-                    "You can patch only your own profile"
-            );
+        if (!isAdmin && !isSelf) {
+            throw new AccessDeniedException("You can patch only your own profile.");
+        }
+
+        if (isAdmin && user.getRole() == Role.ROLE_ADMIN && !isSelf) {
+            throw new AccessDeniedException("You cannot patch another admin.");
         }
 
         if (patchDto.getName() != null) {
@@ -234,10 +243,6 @@ public class UserServiceImpl implements UserService {
 
         if (patchDto.getPhoneNumber() != null) {
             user.setPhoneNumber(patchDto.getPhoneNumber());
-        }
-
-        if (patchDto.getGender() != null) {
-            user.setGender(patchDto.getGender());
         }
 
         // Address patch (NO addressId)
@@ -275,14 +280,14 @@ public class UserServiceImpl implements UserService {
 
         // 2️⃣ Role must be provided
         if (dto.getRole() == null) {
-            throw new BadRequestException("Role cannot be null");
+            throw new BadRequestException("Target role must be specified.");
         }
 
         User user = findAndValidate(userId);
 
         // 3️⃣ Cannot modify another ADMIN
         if (user.getRole() == Role.ROLE_ADMIN && !admin.getId().equals(userId)) {
-            throw new AccessDeniedException("Cannot modify another admin");
+            throw new AccessDeniedException("You are not allowed to modify another administrator's role.");
         }
 
         // 4️⃣ Null-safe restaurant ownership check
@@ -296,7 +301,7 @@ public class UserServiceImpl implements UserService {
                         dto.getRole() == Role.ROLE_DELIVERY_BOY)) {
 
             throw new BadRequestException(
-                    "Restaurant owner cannot be downgraded to USER or DELIVERY_BOY"
+                    "This user owns one or more restaurants. Transfer ownership or delete the restaurants before downgrading the role."
             );
         }
 
@@ -312,22 +317,58 @@ public class UserServiceImpl implements UserService {
         User user = findAndValidate(userId);
         User loggedInUser = getLoggedInUser();
 
-        if (!loggedInUser.getId().equals(userId)) {
-            throw new AccessDeniedException(
-                    "You can change only your own password."
-            );
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+        boolean isSelf = loggedInUser.getId().equals(userId);
+
+        if (!isAdmin && !isSelf) {
+            throw new AccessDeniedException("Only account owners or admins can change a password.");
         }
 
-        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+        if (isAdmin && user.getRole() == Role.ROLE_ADMIN && !isSelf) {
+            throw new AccessDeniedException("You cannot change password for another admin.");
+        }
+
+        if (dto.getNewPassword().equals(dto.getOldPassword())) {
+            throw new BadRequestException("Please choose a new password.");
+        }
+        // validate new password first
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            throw new BadRequestException("Password and Confirm Password must match.");
+        }
+
+        // old password only required for self-change
+        if (!isAdmin &&
+                !passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
             throw new AccessDeniedException("Old password is incorrect.");
         }
 
-
-        if(!dto.getNewPassword().equals(dto.getConfirmPassword()))
-        {
-            throw new BadRequestException("Password and Confirm Password must match.");
-        }
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void changeAvailability(String userId) {
+
+        User loggedInUser = getLoggedInUser();
+        User user = findAndValidate(userId);
+
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+        boolean isSelf = loggedInUser.getId().equals(userId);
+
+        // 🔐 Only self or ADMIN
+        if (!isAdmin && !isSelf) {
+            throw new AccessDeniedException("You are not allowed to change this availability.");
+        }
+
+        // 🚫 Only DELIVERY_BOY
+        if (user.getRole() != Role.ROLE_DELIVERY_BOY) {
+            throw new BadRequestException("Availability can be changed only for delivery partners.");
+        }
+
+        // 🔄 Toggle availability
+        user.setAvailable(!user.isAvailable());
+
         userRepository.save(user);
     }
 

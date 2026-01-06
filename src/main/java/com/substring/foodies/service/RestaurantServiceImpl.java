@@ -294,7 +294,7 @@ public class RestaurantServiceImpl implements RestaurantService {
         for (Address addr : addresses) {
             if(addr.getAddressType() != AddressType.RESTAURANT)
             {
-                throw new BadRequestException("Only restaurant addresses are allowed");
+                throw new BadRequestException("Only restaurant addresses are allowed, Invalid address for restaurant = "+addr.getId());
             }
             restaurant.getAddresses().add(addr);
             addr.getRestaurants().add(restaurant);

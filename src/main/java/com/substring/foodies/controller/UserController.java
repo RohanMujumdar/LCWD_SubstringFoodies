@@ -1,8 +1,9 @@
 package com.substring.foodies.controller;
 
+import com.substring.foodies.dto.ChangePasswordDto;
 import com.substring.foodies.dto.ChangeRoleDto;
-import com.substring.foodies.dto.ErrorResponse;
 import com.substring.foodies.dto.UserDto;
+import com.substring.foodies.dto.UserPutDto;
 import com.substring.foodies.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -57,17 +58,19 @@ public class UserController {
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateUserById(@PathVariable String id, @Valid @RequestBody UserDto userDto)
-    {
-        if (!userDto.getPassword().equals(userDto.getConfirmPassword())) {
-            ErrorResponse response = ErrorResponse.builder()
-                    .message("Password and Confirm Password do not match")
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
+    @PatchMapping("/{id}/change-password")
+    public ResponseEntity<Void> changePassword(
+            @PathVariable("id") String userId,
+            @Valid @RequestBody ChangePasswordDto dto
+    ) {
+        userService.changePassword(userId, dto);
+        return ResponseEntity.noContent().build();
+    }
 
-            return ResponseEntity.badRequest().body(response);  // fixed this too
-        }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateUserById(@PathVariable String id, @Valid @RequestBody UserPutDto userDto)
+    {
         UserDto user = userService.updateUser(id, userDto);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
@@ -84,16 +87,28 @@ public class UserController {
 
     @PatchMapping("/{id}/role-change")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> changeRole(@PathVariable String id, @RequestBody ChangeRoleDto dto)
+    public ResponseEntity<?> changeRole(@PathVariable String id, @Valid @RequestBody ChangeRoleDto dto)
     {
         userService.changeUserRole(id, dto);
         return new ResponseEntity<>("Role changed successfully", HttpStatus.OK);
     }
 
+    @PatchMapping("/{id}/availability")
+    @PreAuthorize("hasRole('DELIVERY_BOY') or hasRole('ADMIN')")
+    public ResponseEntity<?> changeAvailability(@PathVariable String id) {
+
+        userService.changeAvailability(id);
+
+        return ResponseEntity.ok(
+                "Availability status updated successfully."
+        );
+    }
+
+
     @DeleteMapping("/deleteMyAccount/{id}")
-    public ResponseEntity<String> deleteUserById(@PathVariable String id)
+    public ResponseEntity<Void> deleteUserById(@PathVariable String id)
     {
         userService.deleteUser(id);
-        return ResponseEntity.ok("User deleted successfully");
+        return ResponseEntity.noContent().build();
     }
 }

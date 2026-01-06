@@ -23,7 +23,7 @@ public class Restaurant extends BaseAuditableEntity{
     @Lob
     private String description;
 
-    @ManyToMany
+    @ManyToMany()
     @JoinTable(
             name = "restaurant_address", // join table name
             joinColumns = @JoinColumn(name = "restaurant_id"), // this entity's FK

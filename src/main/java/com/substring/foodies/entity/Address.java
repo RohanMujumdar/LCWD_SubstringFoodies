@@ -7,7 +7,8 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Address extends BaseAuditableEntity{
@@ -15,11 +16,19 @@ public class Address extends BaseAuditableEntity{
     @Id
     private String id;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String addressLine;
+
+    @Column(nullable = false)
     private String city;
+
+    @Column(nullable = false)
     private String state;
+
+    @Column(nullable = false)
     private String pincode;
+
+    @Column(nullable = false)
     private String country;
 
     @OneToOne(mappedBy = "address")
