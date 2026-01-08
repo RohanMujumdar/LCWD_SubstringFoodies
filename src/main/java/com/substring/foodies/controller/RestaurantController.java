@@ -1,15 +1,13 @@
 package com.substring.foodies.controller;
 
 import com.substring.foodies.dto.RestaurantDto;
-import com.substring.foodies.exception.ResourceNotFound;
-import com.substring.foodies.repository.RestaurantRepository;
 import com.substring.foodies.service.RestaurantService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -21,11 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 
@@ -42,7 +36,7 @@ public class RestaurantController {
     private String path;
 
     @PostMapping("/")
-    public ResponseEntity<RestaurantDto> addRestaurant(@RequestBody RestaurantDto restaurantDto)
+    public ResponseEntity<RestaurantDto> addRestaurant(@Valid @RequestBody RestaurantDto restaurantDto)
     {
         RestaurantDto restaurant=restaurantService.addRestaurant(restaurantDto);
         return new ResponseEntity<>(restaurant, HttpStatus.CREATED);
@@ -112,7 +106,7 @@ public class RestaurantController {
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<RestaurantDto> updateRestaurant(@RequestBody RestaurantDto restaurantDto, @PathVariable String id)
+    public ResponseEntity<RestaurantDto> updateRestaurant(@Valid @RequestBody RestaurantDto restaurantDto, @PathVariable String id)
     {
         // Check if the restaurant with the given ID exists
         RestaurantDto restaurantDto1 = restaurantService.updateSavedRestaurant(restaurantDto, id);
@@ -166,6 +160,24 @@ public class RestaurantController {
         return ResponseEntity.ok(
                 restaurantService.patchRestaurant(restaurantId, dto)
         );
+    }
+
+    // ✅ ACTIVATE RESTAURANT (ADMIN ONLY)
+    @PatchMapping("/{restaurantId}/activate")
+    public ResponseEntity<String> activateRestaurant(
+            @PathVariable String restaurantId
+    ) {
+        restaurantService.activateRestaurant(restaurantId);
+        return ResponseEntity.ok("Restaurant activated successfully");
+    }
+
+    // ❌ DEACTIVATE RESTAURANT (ADMIN ONLY)
+    @PatchMapping("/{restaurantId}/deactivate")
+    public ResponseEntity<String> deactivateRestaurant(
+            @PathVariable String restaurantId
+    ) {
+        restaurantService.deactivateRestaurant(restaurantId);
+        return ResponseEntity.ok("Restaurant deactivated successfully");
     }
 
     @DeleteMapping("/{id}")

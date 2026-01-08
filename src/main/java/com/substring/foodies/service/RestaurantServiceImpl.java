@@ -86,17 +86,25 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     private User validateRestaurantOwner(String ownerId) {
+
+        User loggedInUser = getLoggedInUser();
+
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() ->
                         new ResourceNotFound("User not found with id = " + ownerId));
 
-        if (!owner.getRole().name().equals("ROLE_RESTAURANT_ADMIN") &&
-                !owner.getRole().name().equals("ROLE_ADMIN")) {
+        // ✅ Owner must be ADMIN or RESTAURANT_ADMIN
+        if (owner.getRole() != Role.ROLE_ADMIN &&
+                owner.getRole() != Role.ROLE_RESTAURANT_ADMIN) {
+
             throw new IllegalStateException(
-                    "User "+ownerId+" is not authorized to own a restaurant ");
+                    "User " + ownerId + " is not authorized to own a restaurant."
+            );
         }
+        // ✅ ADMIN can assign anyone (ADMIN or RESTAURANT_ADMIN)
         return owner;
     }
+
 
     private void validateRestaurantAccess(Restaurant restaurant) {
 
@@ -134,6 +142,16 @@ public class RestaurantServiceImpl implements RestaurantService {
         restaurant.setRating(0.0);
 
         User owner = validateRestaurantOwner(restaurantDto.getOwnerId());
+        User loggedInUser = getLoggedInUser();
+        // 🔒 RESTAURANT_ADMIN can assign ONLY themselves
+        if (loggedInUser.getRole() == Role.ROLE_RESTAURANT_ADMIN &&
+                !loggedInUser.getId().equals(owner.getId())) {
+
+            throw new AccessDeniedException(
+                    "Restaurant admins can assign ownership only to themselves."
+            );
+        }
+
         restaurant.setOwner(owner);
 
         List<String> addressIds = restaurantDto.getAddresses()
@@ -186,7 +204,6 @@ public class RestaurantServiceImpl implements RestaurantService {
         restaurant.setDescription(restaurantDto.getDescription());
         restaurant.setOpenTime(restaurantDto.getOpenTime());
         restaurant.setCloseTime(restaurantDto.getCloseTime());
-        restaurant.setOpen(restaurantDto.isOpen());
 
         if (restaurantDto.getOwnerId() != null &&
                 !restaurantDto.getOwnerId().equals(restaurant.getOwner().getId())) {
@@ -219,9 +236,6 @@ public class RestaurantServiceImpl implements RestaurantService {
 
         if (patchDto.getCloseTime() != null)
             restaurant.setCloseTime(patchDto.getCloseTime());
-
-        restaurant.setOpen(patchDto.isOpen());
-        restaurant.setActive(patchDto.isActive());
 
         if (patchDto.getOwnerId() != null &&
                 !patchDto.getOwnerId().equals(restaurant.getOwner().getId())) {
@@ -262,6 +276,7 @@ public class RestaurantServiceImpl implements RestaurantService {
             food.getRestaurants().add(restaurant); // only if bidirectional
         }
 
+        restaurantRepository.save(restaurant);
         return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
@@ -300,6 +315,7 @@ public class RestaurantServiceImpl implements RestaurantService {
             addr.getRestaurants().add(restaurant);
         }
 
+        restaurantRepository.save(restaurant);
         return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
@@ -320,6 +336,7 @@ public class RestaurantServiceImpl implements RestaurantService {
             addr.getRestaurants().remove(restaurant);
         }
 
+        restaurantRepository.save(restaurant);
         return modelMapper.map(restaurant, RestaurantDto.class);
     }
 
@@ -506,4 +523,28 @@ public class RestaurantServiceImpl implements RestaurantService {
                 .map(resto->modelMapper.map(resto, RestaurantDto.class))
                 .toList();
     }
+
+    @Override
+    @Transactional
+    public void activateRestaurant(String restaurantId) {
+
+        Restaurant restaurant = findAndValidate(restaurantId);
+        validateRestaurantAccess(restaurant);
+
+        restaurant.setActive(true);
+        restaurantRepository.save(restaurant);
+    }
+
+    @Override
+    @Transactional
+    public void deactivateRestaurant(String restaurantId) {
+
+        Restaurant restaurant = findAndValidate(restaurantId);
+
+        validateRestaurantAccess(restaurant);
+
+        restaurant.setActive(false);
+        restaurantRepository.save(restaurant);
+    }
+
 }

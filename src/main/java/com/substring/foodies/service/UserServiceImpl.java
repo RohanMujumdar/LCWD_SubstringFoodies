@@ -1,6 +1,5 @@
 package com.substring.foodies.service;
 
-import com.substring.foodies.controller.AuthController;
 import com.substring.foodies.dto.*;
 import com.substring.foodies.dto.enums.AddressType;
 import com.substring.foodies.dto.enums.Role;

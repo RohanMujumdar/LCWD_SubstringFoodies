@@ -49,4 +49,7 @@ public interface RestaurantService {
 
     List<RestaurantDto> findByFoodItemsList_Id(String foodId);
 
+    void activateRestaurant(String restaurantId);
+
+    void deactivateRestaurant(String restaurantId);
 }

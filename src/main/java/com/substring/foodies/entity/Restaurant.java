@@ -18,9 +18,11 @@ public class Restaurant extends BaseAuditableEntity{
     @Id
     private String id;
 
+    @Column(nullable = false, length = 100)
     private String name;
 
     @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String description;
 
     @ManyToMany()
@@ -60,7 +62,7 @@ public class Restaurant extends BaseAuditableEntity{
     private String banner;
 
     @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
     @Override
