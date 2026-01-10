@@ -17,7 +17,7 @@ public class FoodSubCategory extends BaseAuditableEntity{
     @Id
     private String id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 255)
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -26,10 +26,25 @@ public class FoodSubCategory extends BaseAuditableEntity{
     // 👇 controls category order in menu
     private int displayOrder;
 
+    @Column(
+            name = "normalized_name",
+            nullable = false
+    )
+    private String normalizedName;
+
     @OneToMany(
             mappedBy = "foodSubCategory",
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
     private List<FoodItems> foodItemList = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    private void normalizeName() {
+        this.normalizedName = name
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]", "");
+    }
+
 }

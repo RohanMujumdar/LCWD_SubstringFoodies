@@ -2,6 +2,7 @@ package com.substring.foodies.controller;
 
 import com.substring.foodies.dto.FoodSubCategoryDto;
 import com.substring.foodies.service.FoodSubCategoryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class FoodSubCategoryController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<FoodSubCategoryDto> create(
-            @RequestBody FoodSubCategoryDto dto) {
+            @Valid @RequestBody FoodSubCategoryDto dto) {
 
         FoodSubCategoryDto created =
                 foodSubCategoryService.create(dto);
@@ -48,12 +49,22 @@ public class FoodSubCategoryController {
         );
     }
 
+    @GetMapping("/{categoryId}/sub-categories")
+    public ResponseEntity<List<FoodSubCategoryDto>> getSubCategoriesByCategory(
+            @PathVariable String categoryId) {
+
+        List<FoodSubCategoryDto> subCategories =
+                foodSubCategoryService.getSubCategoriesByCategory(categoryId);
+
+        return ResponseEntity.ok(subCategories);
+    }
+
     // UPDATE (PUT)
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<FoodSubCategoryDto> update(
             @PathVariable String id,
-            @RequestBody FoodSubCategoryDto dto) {
+            @Valid @RequestBody FoodSubCategoryDto dto) {
 
         return ResponseEntity.ok(
                 foodSubCategoryService.update(id, dto)

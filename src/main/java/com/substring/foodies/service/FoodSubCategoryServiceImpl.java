@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.substring.foodies.Utility.Helper.normalize;
+
 @Service
 @Transactional
 public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
@@ -59,8 +61,10 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
                                 dto.getFoodCategoryId())
                 );
 
-        if (foodSubCategoryRepository.existsByNameIgnoreCaseAndFoodCategoryId(
-                dto.getName(), category.getId())) {
+        String normalized = normalize(dto.getName());
+
+        if (foodSubCategoryRepository.existsByNormalizedNameIgnoreCaseAndFoodCategoryId(
+                normalized, category.getId())) {
 
             throw new BadRequestException(
                     "Sub-category already exists with name = " + dto.getName()
@@ -93,6 +97,14 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
     }
 
     @Override
+    public List<FoodSubCategoryDto> getSubCategoriesByCategory(String id) {
+        return foodSubCategoryRepository.findAllFoodSubCategoriesByFoodCategoryId(id)
+                .stream()
+                .map(sc -> modelMapper.map(sc, FoodSubCategoryDto.class))
+                .toList();
+    }
+
+    @Override
     public FoodSubCategoryDto update(String id, FoodSubCategoryDto dto) {
 
         if (dto.getName() == null || dto.getName().isBlank()) {
@@ -106,20 +118,23 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
         FoodSubCategory subCategory = findAndValidate(id);
 
         String newName = dto.getName();
+        String normalized = normalize(dto.getName());
+
         String categoryId = dto.getFoodCategoryId();
-
-        // uniqueness check (exclude same entity)
-        if (!subCategory.getName().equalsIgnoreCase(newName) &&
-                foodSubCategoryRepository.existsByNameIgnoreCaseAndFoodCategoryId(
-                        newName, categoryId)) {
-
-            throw new BadRequestException(
-                    "Sub-category already exists with name = " + newName
-            );
-        }
 
         FoodCategory category = foodCategoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFound("Category not found with id = " + categoryId));
+
+
+        // uniqueness check (exclude same entity)
+        if (!subCategory.getName().equalsIgnoreCase(newName) &&
+                foodSubCategoryRepository.existsByNormalizedNameIgnoreCaseAndFoodCategoryId(
+                        normalized, categoryId)) {
+
+            throw new BadRequestException(
+                    "Sub-category already exists with name = " + newName + " in category id " + categoryId
+            );
+        }
 
         subCategory.setName(newName);
         subCategory.setFoodCategory(category);
@@ -141,15 +156,15 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
         if (dto.getName() != null &&
                 !dto.getName().equalsIgnoreCase(subCategory.getName())) {
 
-            if (foodSubCategoryRepository.existsByNameIgnoreCaseAndFoodCategoryId(
-                    dto.getName(),
+            String normalized = normalize(dto.getName());
+            if (foodSubCategoryRepository.existsByNormalizedNameIgnoreCaseAndFoodCategoryId(
+                    normalized,
                     subCategory.getFoodCategory().getId())) {
 
                 throw new BadRequestException(
-                        "Sub-category already exists with name = " + dto.getName()
+                        "Sub-category already exists with name = " + dto.getName() + " in category "+ subCategory.getFoodCategory().getId()
                 );
             }
-
             subCategory.setName(dto.getName());
         }
 
@@ -164,6 +179,25 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
                                             dto.getFoodCategoryId())
                     );
 
+            // 🔑 Determine the name that will actually be saved
+            String effectiveName =
+                    dto.getName() != null ? dto.getName() : subCategory.getName();
+
+            String normalized = normalize(effectiveName);
+
+            // 🔐 Uniqueness check in TARGET category
+            if (foodSubCategoryRepository
+                    .existsByNormalizedNameIgnoreCaseAndFoodCategoryId(
+                            normalized,
+                            dto.getFoodCategoryId())) {
+
+                throw new BadRequestException(
+                        "Sub-category already exists with name = " +
+                                effectiveName + " in category " + dto.getFoodCategoryId()
+                );
+            }
+
+            // ✅ Safe to move
             subCategory.setFoodCategory(category);
         }
 
@@ -187,6 +221,7 @@ public class FoodSubCategoryServiceImpl implements FoodSubCategoryService {
             );
         }
 
-        foodSubCategoryRepository.save(subCategory);
+        subCategory.getFoodCategory().getFoodSubCategoryList().remove(subCategory);
+        foodSubCategoryRepository.delete(subCategory);
     }
 }

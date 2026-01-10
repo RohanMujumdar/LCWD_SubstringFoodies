@@ -1,7 +1,9 @@
 package com.substring.foodies.controller;
 
 import com.substring.foodies.dto.FoodCategoryDto;
+import com.substring.foodies.dto.FoodSubCategoryDto;
 import com.substring.foodies.service.FoodCategoryService;
+import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,7 +21,7 @@ public class FoodCategoryController {
     private FoodCategoryService foodCategoryService;
 
     @PostMapping
-    public ResponseEntity<FoodCategoryDto> create(@RequestBody FoodCategoryDto dto) throws BadRequestException {
+    public ResponseEntity<FoodCategoryDto> create(@Valid @RequestBody FoodCategoryDto dto) throws BadRequestException {
         return new ResponseEntity<>(foodCategoryService.create(dto), HttpStatus.CREATED);
     }
 
@@ -27,6 +29,12 @@ public class FoodCategoryController {
     public ResponseEntity<FoodCategoryDto> getById(@PathVariable String id) {
         return ResponseEntity.ok(foodCategoryService.getById(id));
     }
+
+    @GetMapping("/{id}/sub-categories")
+    public ResponseEntity<List<FoodSubCategoryDto>> getByAllSubCategories(@PathVariable String id) {
+        return ResponseEntity.ok(foodCategoryService.getAllSubCategoriesByCategory(id));
+    }
+
 
     @GetMapping
     public ResponseEntity<List<FoodCategoryDto>> getAll() {
@@ -36,7 +44,7 @@ public class FoodCategoryController {
     @PutMapping("/{id}")
     public ResponseEntity<FoodCategoryDto> update(
             @PathVariable String id,
-            @RequestBody FoodCategoryDto dto) {
+            @Valid @RequestBody FoodCategoryDto dto) {
 
         return ResponseEntity.ok(foodCategoryService.update(id, dto));
     }

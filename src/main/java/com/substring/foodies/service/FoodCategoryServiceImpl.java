@@ -1,7 +1,9 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.dto.FoodCategoryDto;
+import com.substring.foodies.dto.FoodSubCategoryDto;
 import com.substring.foodies.entity.FoodCategory;
+import com.substring.foodies.entity.FoodSubCategory;
 import com.substring.foodies.exception.BadRequestException;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.FoodCategoryRepository;
@@ -13,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import static com.substring.foodies.Utility.Helper.normalize;
 
 @Service
 @Transactional
@@ -44,7 +48,9 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
             );
         }
 
-        if (foodCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
+        String normalized = normalize(dto.getName());
+
+        if (foodCategoryRepository.existsByNormalizedNameIgnoreCase(normalized)) {
             throw new BadRequestException(
                     "Food category already exists with name = " + dto.getName()
             );
@@ -70,50 +76,82 @@ public class FoodCategoryServiceImpl implements FoodCategoryService {
     }
 
     @Override
+    public List<FoodSubCategoryDto> getAllSubCategoriesByCategory(String id)
+    {
+        FoodCategory category = findAndValidate(id);
+
+        List<FoodSubCategory> foodSubCategoryList = category.getFoodSubCategoryList();
+        return foodSubCategoryList.stream()
+                .map(cat -> modelMapper.map(cat, FoodSubCategoryDto.class)).toList();
+    }
+
+    @Override
     public FoodCategoryDto update(String id, FoodCategoryDto dto) {
+
+        if (dto.getName() == null || dto.getName().isBlank()) {
+            throw new BadRequestException("Category name is required");
+        }
 
         FoodCategory category = findAndValidate(id);
 
-        // ✅ Name uniqueness check ONLY if name is changing
-        if (dto.getName() != null &&
-                !category.getName().equalsIgnoreCase(dto.getName()) &&
-                foodCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
+        String newName = dto.getName();
+        String normalized = normalize(newName);
+
+        boolean nameChanged =
+                !category.getName().equalsIgnoreCase(newName);
+
+        if (nameChanged &&
+                foodCategoryRepository.existsByNormalizedNameIgnoreCase(normalized)) {
 
             throw new BadRequestException(
-                    "Food category already exists with name = " + dto.getName()
+                    "Food category already exists with name = " + newName
             );
         }
 
-        category.setName(dto.getName());
+        category.setName(newName);              // triggers @PreUpdate
         category.setDescription(dto.getDescription());
 
-        return modelMapper.map(foodCategoryRepository.save(category), FoodCategoryDto.class);
+        return modelMapper.map(
+                foodCategoryRepository.save(category),
+                FoodCategoryDto.class
+        );
     }
+
 
     @Override
     public FoodCategoryDto patch(String id, FoodCategoryDto dto) {
 
         FoodCategory category = findAndValidate(id);
 
-        if (dto.getName() != null &&
-                !category.getName().equalsIgnoreCase(dto.getName()) &&
-                foodCategoryRepository.existsByNameIgnoreCase(dto.getName())) {
-
-            throw new BadRequestException(
-                    "Food category already exists with name = " + dto.getName()
-            );
-        }
-
         if (dto.getName() != null) {
-            category.setName(dto.getName());
+
+            String newName = dto.getName();
+            String normalized = normalize(newName);
+
+            boolean nameChanged =
+                    !category.getName().equalsIgnoreCase(newName);
+
+            if (nameChanged &&
+                    foodCategoryRepository.existsByNormalizedNameIgnoreCase(normalized)) {
+
+                throw new BadRequestException(
+                        "Food category already exists with name = " + newName
+                );
+            }
+
+            category.setName(newName);   // triggers @PreUpdate
         }
 
         if (dto.getDescription() != null) {
             category.setDescription(dto.getDescription());
         }
 
-        return modelMapper.map(foodCategoryRepository.save(category), FoodCategoryDto.class);
+        return modelMapper.map(
+                foodCategoryRepository.save(category),
+                FoodCategoryDto.class
+        );
     }
+
 
 
     @Override

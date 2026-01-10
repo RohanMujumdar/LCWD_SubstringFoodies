@@ -12,6 +12,8 @@ public interface FoodSubCategoryService {
 
     List<FoodSubCategoryDto> getAll();
 
+    List<FoodSubCategoryDto> getSubCategoriesByCategory(String id);
+
     FoodSubCategoryDto update(String id, FoodSubCategoryDto dto);
 
     FoodSubCategoryDto patch(String id, FoodSubCategoryDto dto);

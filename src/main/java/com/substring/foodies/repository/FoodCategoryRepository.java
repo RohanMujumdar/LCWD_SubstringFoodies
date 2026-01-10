@@ -8,4 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface FoodCategoryRepository extends JpaRepository<FoodCategory, String> {
 
     boolean existsByNameIgnoreCase(String name);
+    boolean existsByNormalizedNameIgnoreCase(String name);
 }
