@@ -90,5 +90,5 @@ public interface FoodService {
 
     // ===================== RATING =====================
 
-    void updateFoodRating(String foodId, double rating);
+    void updateFoodRating(String foodId, ChangeRatingDto rating);
 }

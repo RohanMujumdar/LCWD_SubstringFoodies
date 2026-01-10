@@ -71,6 +71,11 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, String> {
             String name
     );
 
+    List<FoodItems> findByRestaurantsIdAndNormalizedNameIgnoreCaseContainingOrderByRatingDesc(
+            String restaurantId,
+            String name
+    );
+
 
     // ===================== GLOBAL FILTERS =====================
 
@@ -81,6 +86,8 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, String> {
     List<FoodItems> findByFoodTypeOrderByRatingDesc(FoodType foodType);
 
     List<FoodItems> findByNameIgnoreCaseContainingOrderByRatingDesc(String name);
+
+    List<FoodItems> findByNormalizedNameIgnoreCaseContainingOrderByRatingDesc(String name);
 
 
     // ===================== RATING =====================
@@ -96,6 +103,12 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, String> {
     boolean existsByNormalizedName(String normalizedName);
 
     boolean existsByNormalizedNameAndIdNot(String normalizedName, String id);
+
+    boolean existsByNormalizedNameAndFoodCategoryIdAndFoodSubCategoryIdAndIdNot(
+            String normalized,
+            String foodCategoryId,
+            String foodSubCategoryId,
+            String foodId);
 
     boolean existsByFoodCategoryId(String categoryId);
 }

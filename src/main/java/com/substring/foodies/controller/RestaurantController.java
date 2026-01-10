@@ -140,6 +140,15 @@ public class RestaurantController {
                 .body(updatedRestaurant);
     }
 
+    @DeleteMapping("/{restaurantId}/foods")
+    public ResponseEntity<Void> removeFoodItemsFromRestaurant(
+            @PathVariable String restaurantId,
+            @RequestBody List<String> foodIds
+    ) {
+        restaurantService.removeFoodItems(restaurantId, foodIds);
+        return ResponseEntity.noContent().build();
+    }
+
     // ✅ REMOVE addresses from restaurant
     @DeleteMapping("/{restaurantId}/addresses")
     public ResponseEntity<RestaurantDto> removeAddressesFromRestaurant(

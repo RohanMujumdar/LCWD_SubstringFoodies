@@ -18,7 +18,7 @@ public class AddressController {
     private AddressService addressService;
 
     // CREATE
-    @PostMapping
+    @PostMapping("/admin")
     public ResponseEntity<AddressDto> createAddress(
             @Valid @RequestBody AddressDto addressDto) {
 
@@ -27,17 +27,23 @@ public class AddressController {
     }
 
     // READ single
-    @GetMapping("/{id}")
+    @GetMapping("/admin/{id}")
     public ResponseEntity<AddressDto> getAddressById(@PathVariable String id) {
         AddressDto address = addressService.getAddressById(id);
         return ResponseEntity.ok(address);
     }
 
     // READ all
-    @GetMapping
+    @GetMapping("/admin")
     public ResponseEntity<List<AddressDto>> getAllAddresses() {
         List<AddressDto> addresses = addressService.getAllAddresses();
         return ResponseEntity.ok(addresses);
+    }
+
+    @GetMapping("/{userId}/user")
+    public ResponseEntity<AddressDto> getAddressByUserId(@PathVariable String userId) {
+        AddressDto address = addressService.getAddressByUserId(userId);
+        return ResponseEntity.ok(address);
     }
 
     @GetMapping("/{restaurantId}/restaurants")
@@ -70,7 +76,7 @@ public class AddressController {
     }
 
     // DELETE
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<Void> deleteAddress(@PathVariable String id) {
         addressService.deleteAddress(id);
         return ResponseEntity.noContent().build();

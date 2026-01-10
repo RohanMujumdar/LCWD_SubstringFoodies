@@ -33,6 +33,7 @@ import static com.substring.foodies.Utility.Helper.normalize;
 
 @Slf4j
 @Service
+@Transactional
 public class FoodServiceImpl implements FoodService {
 
     @Autowired
@@ -156,9 +157,13 @@ public class FoodServiceImpl implements FoodService {
         FoodItems food = findAndValidate(foodId);
 
         String normalized = normalize(dto.getName());
-        if (foodItemRepository.existsByNormalizedNameAndIdNot(normalized, foodId)) {
+
+        if (foodItemRepository
+                .existsByNormalizedNameAndIdNot(normalized, foodId)) {
+
             throw new IllegalStateException(
-                    "Food item already exists with name = " + dto.getName()
+                    "Food item already exists with name = " +
+                            dto.getName()
             );
         }
 
@@ -172,12 +177,12 @@ public class FoodServiceImpl implements FoodService {
         FoodCategory category = foodCategoryRepository
                 .findById(dto.getFoodCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food category not found"));
+                        new ResourceNotFound("Food category not found with id = "+dto.getFoodCategoryId()));
 
         FoodSubCategory subCategory = foodSubCategoryRepository
                 .findById(dto.getFoodSubCategoryId())
                 .orElseThrow(() ->
-                        new ResourceNotFound("Food subcategory not found"));
+                        new ResourceNotFound("Food subcategory not found with id = "+dto.getFoodSubCategoryId()));
 
         if (!subCategory.getFoodCategory().getId().equals(category.getId())) {
             throw new FoodCategoryException("SubCategory does not belong to category");
@@ -226,14 +231,29 @@ public class FoodServiceImpl implements FoodService {
 
         FoodCategory category = foodCategoryRepository
                 .findById(dto.getFoodCategoryId())
-                .orElseThrow(() -> new ResourceNotFound("Category not found"));
+                .orElseThrow(() -> new ResourceNotFound("Category not found with id = "+dto.getFoodCategoryId()));
 
         FoodSubCategory subCategory = foodSubCategoryRepository
                 .findById(dto.getFoodSubCategoryId())
-                .orElseThrow(() -> new ResourceNotFound("Subcategory not found"));
+                .orElseThrow(() -> new ResourceNotFound("Subcategory not found with id = "+dto.getFoodSubCategoryId()));
 
         if (!subCategory.getFoodCategory().getId().equals(category.getId())) {
             throw new FoodCategoryException("SubCategory does not belong to category");
+        }
+
+        String normalized = normalize(food.getName());
+
+        if (foodItemRepository
+                .existsByNormalizedNameAndFoodCategoryIdAndFoodSubCategoryIdAndIdNot(
+                        normalized,
+                        dto.getFoodCategoryId(),
+                        dto.getFoodSubCategoryId(),
+                        foodId)) {
+
+            throw new IllegalStateException(
+                    "Food item already exists with name = " +
+                            food.getName() + " in the selected category and sub-category"
+            );
         }
 
         food.setFoodCategory(category);
@@ -286,14 +306,6 @@ public class FoodServiceImpl implements FoodService {
 
         String extension = fileName.substring(fileName.lastIndexOf('.'));
         String newFileName = System.currentTimeMillis() + extension;
-
-        if (foodItem.getImageUrl() != null) {
-            Path oldFilePath = Paths.get(bannerFolderpath)
-                    .resolve(foodItem.getImageUrl())
-                    .normalize();
-            Files.deleteIfExists(oldFilePath);
-        }
-
 
         FileData fileData = fileService.uploadFile(file, bannerFolderpath + newFileName);
         foodItem.setImageUrl(fileData.getFileName());
@@ -368,7 +380,7 @@ public class FoodServiceImpl implements FoodService {
         // ❌ Non-owning side → do NOT manage relationship
         if (!food.getRestaurants().isEmpty()) {
             throw new IllegalStateException(
-                    "Food item is linked to restaurants and cannot be deleted");
+                    "Food item is linked to restaurants and cannot be deleted. First remove the foodItem from all the restaurants.");
         }
 
         // Delete image
@@ -536,7 +548,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     public List<FoodItemDetailsDto> searchFoodByName(String foodName) {
         return foodItemRepository
-                .findByNameIgnoreCaseContainingOrderByRatingDesc(foodName)
+                .findByNormalizedNameIgnoreCaseContainingOrderByRatingDesc(normalize(foodName))
                 .stream()
                 .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
                 .toList();
@@ -568,8 +580,8 @@ public class FoodServiceImpl implements FoodService {
         validateRestaurant(restaurantId);
 
         return foodItemRepository
-                .findByRestaurantsIdAndNameIgnoreCaseContainingOrderByRatingDesc(
-                        restaurantId, foodName)
+                .findByRestaurantsIdAndNormalizedNameIgnoreCaseContainingOrderByRatingDesc(
+                        restaurantId, normalize(foodName))
                 .stream()
                 .map(f -> modelMapper.map(f, FoodItemDetailsDto.class))
                 .toList();
@@ -652,8 +664,9 @@ public class FoodServiceImpl implements FoodService {
 
     @Override
     @Transactional
-    public void updateFoodRating(String foodId, double rating) {
+    public void updateFoodRating(String foodId, ChangeRatingDto changeRating) {
 
+        double rating = changeRating.getRating();
         if (rating < 1 || rating > 5) {
             throw new IllegalArgumentException("Rating must be between 1 and 5");
         }

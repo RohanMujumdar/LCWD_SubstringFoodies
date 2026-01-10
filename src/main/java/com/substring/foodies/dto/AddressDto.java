@@ -13,6 +13,7 @@ import lombok.*;
 @Builder
 public class AddressDto {
 
+    @NotBlank(message = "Please provide the id.")
     private String id;
 
     @NotBlank(message = "Address line is required")

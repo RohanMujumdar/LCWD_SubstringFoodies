@@ -15,4 +15,10 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(String userEmail);
     int countByRole(Role role);
     boolean existsByEmail(String email);
+
+    // 🚴 Find free delivery boys
+    Optional<User> findFirstByRoleAndIsAvailableTrue(Role role);
+
+    // 🔁 Free delivery boys after 10 minutes
+    List<User> findByRoleAndIsAvailableFalse(Role role);
 }

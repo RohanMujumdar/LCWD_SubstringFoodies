@@ -15,6 +15,7 @@ import lombok.*;
 @Builder
 public class UserDto {
 
+    @NotBlank(message = "Please provide the id.")
     private String id;
 
     @NotEmpty(message = "Please provide your Name.")

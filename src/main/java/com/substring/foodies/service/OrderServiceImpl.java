@@ -5,7 +5,9 @@ import com.substring.foodies.dto.OrderPlaceRequest;
 import com.substring.foodies.dto.enums.OrderStatus;
 import com.substring.foodies.dto.enums.PaymentMode;
 import com.substring.foodies.dto.enums.PaymentStatus;
+import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.*;
+
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.CartRepository;
 import com.substring.foodies.repository.OrderRepository;
@@ -16,11 +18,13 @@ import lombok.AllArgsConstructor;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -46,12 +50,44 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private RestaurantRepository restaurantRepository;
 
+    private User getLoggedInUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AccessDeniedException("Invalid session"));
+    }
+
+    private void validateRestaurantAccess(Restaurant restaurant) {
+
+        User user = getLoggedInUser();
+
+        Role role = user.getRole();
+
+        // ❌ Only ADMIN or RESTAURANT_ADMIN allowed
+        if (role != Role.ROLE_ADMIN && role != Role.ROLE_RESTAURANT_ADMIN) {
+            throw new AccessDeniedException(
+                    "Access denied. Only ADMIN or RESTAURANT_ADMIN can manage restaurants."
+            );
+        }
+
+        if (user.getRole() == Role.ROLE_RESTAURANT_ADMIN &&
+                !user.getId().equals(restaurant.getOwner().getId())) {
+
+            throw new AccessDeniedException(
+                    "You are not authorized to perform this action. " +
+                            "Only the restaurant owner or an admin can perform this action."
+            );
+        }
+    }
+
     @Override
     @Transactional
     public OrderDto placeOrderRequest(OrderPlaceRequest orderPlaceRequest) {
 
-        User user = userRepository.findById(orderPlaceRequest.getUserId())
-                .orElseThrow(() -> new ResourceNotFound(String.format("User not found with id = %s", orderPlaceRequest.getUserId())));
+        User user = getLoggedInUser();
         Cart cart = cartRepository.findByCreator(user).orElseThrow(() -> new ResourceNotFound(String.format("Cart Not Found for userId = %s", user.getId())));
 
         Restaurant restaurant = restaurantRepository.findById(orderPlaceRequest.getRestaurantId())
@@ -64,6 +100,7 @@ public class OrderServiceImpl implements OrderService {
         }
         // Convert cart items to order items
         Order order = new Order();
+        order.setId(UUID.randomUUID().toString());
         order.setUser(user);
         order.setRestaurant(restaurant);
 
@@ -89,11 +126,10 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> orderItems = cartItems.stream()
                 .map(cartItem -> {
                     OrderItem orderItem = new OrderItem();
+                    orderItem.setId(UUID.randomUUID().toString());
                     orderItem.setOrder(order);
                     orderItem.setQuantity(cartItem.getQuantity());
                     orderItem.setFoodItems(cartItem.getFoodItems());
-//                    totalAmount.set(totalAmount.get()
-//                            +( (int)( cartItem.getFoodItems().actualPrice() * cartItem.getQuantity())));
                     totalAmount.set(totalAmount.get()
                             +(cartItem.getTotalCartItemsPrice()));
 
@@ -102,9 +138,11 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
         order.setTotalAmount(totalAmount.get());
         order.setOrderItemList(orderItems);
+        order.setDeliveryTime(order.getOrderedAt().plusMinutes(30));
+
         orderRepository.save(order);
         // Clear user's cart
-        cartService.clearCart(orderPlaceRequest.getUserId());
+        cartService.clearCart(user.getId());
         return mapper.map(order, OrderDto.class);
     }
 
@@ -118,6 +156,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderDto> getOrdersByRestaurant(String restaurantId) {
+
+        Restaurant restaurant = restaurantRepository.findById(restaurantId)
+                                    .orElseThrow(()->new ResourceNotFound("Restaurant not found with id = "+restaurantId));
+
+        validateRestaurantAccess(restaurant);
+
         List<Order> orders = orderRepository.findByRestaurantId(restaurantId);
         return orders.stream()
                 .map(order -> mapper.map(order, OrderDto.class))
@@ -126,6 +170,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderDto> getOrderByUserId(String userId) {
+
+        User user = getLoggedInUser();
+        if (!user.getId().equals(userId) && user.getRole() != Role.ROLE_ADMIN) {
+            throw new AccessDeniedException("You are not authorized to perform this action.");
+        }
+
         List<Order> orders = orderRepository.findByUserId(userId);
         return orders.stream()
                 .map(order -> mapper.map(order, OrderDto.class))
@@ -142,45 +192,71 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderDto trackOrder(String orderId) {
+
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFound("Order not found with id: " + orderId));
+                .orElseThrow(() ->
+                        new ResourceNotFound("Order not found with id: " + orderId));
+
+        User loggedInUser = getLoggedInUser();
+
+        boolean isOwner = loggedInUser.getId().equals(order.getUser().getId());
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+        boolean isRestaurantAdmin =
+                loggedInUser.getRole() == Role.ROLE_RESTAURANT_ADMIN &&
+                        loggedInUser.getId().equals(order.getRestaurant().getOwner().getId());
+
+        if (!isOwner && !isAdmin && !isRestaurantAdmin) {
+            throw new AccessDeniedException(
+                    "You are not authorized to track this order."
+            );
+        }
+
         return mapper.map(order, OrderDto.class);
     }
 
     @Override
+    @Transactional
     public OrderDto cancelOrder(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFound("Order not found with id: " + orderId));
 
-        if (order.getStatus() == OrderStatus.DELIVERED) {
-            throw new IllegalStateException("Delivered orders cannot be cancelled");
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Order not found with id: " + orderId));
+
+        User loggedInUser = getLoggedInUser();
+
+        // 🔐 Authorization check
+        boolean isOwner = loggedInUser.getId().equals(order.getUser().getId());
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new AccessDeniedException(
+                    "You are not authorized to cancel this order."
+            );
         }
 
+        // ❌ Order already delivered or cancelled
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Delivered orders cannot be cancelled.");
+        }
 
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Order is already cancelled.");
+        }
+
+        // ✅ Cancel order
         order.setStatus(OrderStatus.CANCELLED);
 
-        LocalDateTime currentTime = LocalDateTime.now();
-
-        long minutesPassed = Duration.between(order.getOrderedAt(), currentTime).toMinutes();
-
-        if(minutesPassed <= 10)
-        {
-            if(order.getPaymentMode() == PaymentMode.CASH_ON_DELIVERY)
-            {
-                order.setPaymentStatus(PaymentStatus.NOT_PAID);
-            }
-            else {
-                order.setPaymentStatus(PaymentStatus.REFUNDED);
-            }
-        }
-        else
-        {
-            order.setPaymentStatus(PaymentStatus.NON_REFUNDABLE);
+        // 💰 Handle payment state (simple logic for now)
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            order.setPaymentStatus(PaymentStatus.REFUNDED_INITIATED);
+            // Later → integrate Razorpay refund
         }
 
         Order savedOrder = orderRepository.save(order);
+
         return mapper.map(savedOrder, OrderDto.class);
     }
+
 
     @Override
     public OrderDto updateOrderStatus(String orderId, OrderStatus orderStatus) {

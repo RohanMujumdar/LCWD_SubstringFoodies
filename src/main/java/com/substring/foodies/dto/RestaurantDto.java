@@ -18,6 +18,7 @@ import java.util.Set;
 @Builder
 public class RestaurantDto {
 
+    @NotBlank(message = "Please provide the id.")
     private String id;
 
     @NotBlank(message = "Please provide the name of the Restaurant")

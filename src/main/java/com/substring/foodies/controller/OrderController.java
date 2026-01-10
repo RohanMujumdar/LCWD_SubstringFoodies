@@ -6,6 +6,7 @@ import com.substring.foodies.dto.enums.OrderStatus;
 import com.substring.foodies.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,6 +39,7 @@ public class OrderController {
     }
 
     @GetMapping("/restaurant/{restaurantId}")
+    @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<List<OrderDto>> getOrdersByRestaurant(@PathVariable String restaurantId) {
         List<OrderDto> orders = orderService.getOrdersByRestaurant(restaurantId);
         return ResponseEntity.ok(orders);
@@ -50,6 +52,7 @@ public class OrderController {
     }
 
     @GetMapping("/delivery/{deliveryBoyId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DELIVERY_BOY")
     public ResponseEntity<List<OrderDto>> getOrdersByDeliveryBoy(@PathVariable String deliveryBoyId) {
         List<OrderDto> orders = orderService.getOrderByDeliveryBoy(deliveryBoyId);
         return ResponseEntity.ok(orders);
@@ -68,6 +71,7 @@ public class OrderController {
     }
 
     @PutMapping("/{orderId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderDto> updateOrderStatus(
             @PathVariable String orderId,
             @RequestBody OrderStatus orderStatus) {

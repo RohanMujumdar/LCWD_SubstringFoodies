@@ -6,6 +6,7 @@ import com.substring.foodies.entity.Restaurant;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.AddressRepository;
 import com.substring.foodies.repository.RestaurantRepository;
+import com.substring.foodies.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class AddressServiceImpl implements AddressService {
 
     @Autowired
     private RestaurantRepository restaurantRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -48,6 +52,15 @@ public class AddressServiceImpl implements AddressService {
                 .orElseThrow(() ->
                         new ResourceNotFound("Address not found with id = " + id));
 
+        return modelMapper.map(address, AddressDto.class);
+    }
+
+    @Override
+    public AddressDto getAddressByUserId(String userId) {
+        userRepository.findById(userId).
+                orElseThrow(()->new ResourceNotFound("User not found with id = "+userId));
+
+        Address address = addressRepository.findByUserId(userId);
         return modelMapper.map(address, AddressDto.class);
     }
 

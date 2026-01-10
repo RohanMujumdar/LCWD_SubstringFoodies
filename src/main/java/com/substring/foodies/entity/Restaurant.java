@@ -12,7 +12,6 @@ import java.util.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-
 public class Restaurant extends BaseAuditableEntity{
 
     @Id

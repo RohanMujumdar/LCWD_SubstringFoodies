@@ -10,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Data
 public class OrderItem extends BaseAuditableEntity{
 
     @Id

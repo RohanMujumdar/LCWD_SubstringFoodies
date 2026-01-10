@@ -29,40 +29,42 @@ public class FoodItems extends BaseAuditableEntity{
     @Min(0)
     private int price;
 
-    private Boolean isAvailable;
+    @Column(nullable = false)
+    private Boolean isAvailable = true;
 
     @Enumerated(EnumType.STRING)
     private FoodType foodType = FoodType.VEG;
 
     @DecimalMin(value = "0.0")
     @DecimalMax(value = "5.0")
-    @Column(name = "rating_star")
+    @Column(name = "rating_star", nullable = false)
     private Double rating = 0.0;
 
     private String imageUrl;
 
     @Column(
             name = "normalized_name",
-            nullable = false,
-            updatable = false
+            nullable = false
     )
     private String normalizedName;
 
     @Min(0)
-    private int discountAmount;
+    private int discountAmount = 0;
 
     @ManyToMany(mappedBy = "foodItemsList")
     private Set<Restaurant> restaurants = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "food_category_id", nullable = false)
     private FoodCategory foodCategory;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "food_sub_category_id", nullable = false)
     private FoodSubCategory foodSubCategory;
 
     public int actualPrice()
     {
-        return price - discountAmount;
+        return Math.max(0, price - discountAmount);
     }
 
     public int getDiscountPercentage() {
@@ -89,6 +91,10 @@ public class FoodItems extends BaseAuditableEntity{
         this.normalizedName = name
                 .toLowerCase()
                 .replaceAll("[^a-z0-9]", "");
+
+        if (discountAmount > price) {
+            throw new IllegalStateException("Discount cannot exceed price.");
+        }
     }
 
 }

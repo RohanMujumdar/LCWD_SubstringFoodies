@@ -23,6 +23,8 @@ public interface RestaurantService {
 
     RestaurantDto addFoodItems(String restoId, List<String> foodIds);
 
+    void removeFoodItems(String restoId, List<String> foodIds);
+
     RestaurantDto addAddressesToRestaurant(String restoId, List<String> addressIds);
 
     RestaurantDto removeAddressesFromRestaurant(String restoId, List<String> addressIds);

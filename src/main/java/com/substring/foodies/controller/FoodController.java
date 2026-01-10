@@ -101,7 +101,7 @@ public class FoodController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<FoodItemDetailsDto> addFood(
-            @RequestBody FoodItemRequestDto dto) {
+            @Valid @RequestBody FoodItemRequestDto dto) {
 
         return new ResponseEntity<>(
                 foodService.addFood(dto),
@@ -113,7 +113,7 @@ public class FoodController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','RESTAURANT_ADMIN')")
     public ResponseEntity<FoodItemDetailsDto> updateFood(
-            @RequestBody FoodItemRequestDto dto,
+            @Valid @RequestBody FoodItemRequestDto dto,
             @PathVariable String id) {
 
         return ResponseEntity.ok(
@@ -296,7 +296,7 @@ public class FoodController {
     @PatchMapping("/{foodId}/rating")
     public ResponseEntity<Void> updateFoodRating(
             @PathVariable String foodId,
-            @RequestParam double rating) {
+            @RequestBody ChangeRatingDto rating) {
 
         foodService.updateFoodRating(foodId, rating);
         return ResponseEntity.noContent().build();

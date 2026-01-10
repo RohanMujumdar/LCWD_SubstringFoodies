@@ -17,7 +17,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@Data
 @Table(name = "food_Orders")
 public class Order extends BaseAuditableEntity{
 
@@ -32,7 +31,7 @@ public class Order extends BaseAuditableEntity{
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "address_id")
     private Address address;
 
@@ -55,6 +54,7 @@ public class Order extends BaseAuditableEntity{
     @Enumerated(EnumType.STRING)
     private PaymentStatus paymentStatus;
 
+    @Enumerated(EnumType.STRING)
     private PaymentMode paymentMode;
 
     private String paymentId;

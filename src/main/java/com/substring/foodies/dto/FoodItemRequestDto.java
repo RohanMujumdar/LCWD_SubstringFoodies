@@ -14,10 +14,10 @@ import java.util.Set;
 @Builder
 public class FoodItemRequestDto {
 
-    @NotBlank
+    @NotBlank(message = "Please provide the id.")
     private String id;
 
-    @NotBlank
+    @NotBlank(message = "Please provide the name.")
     private String name;
 
     private String description;
@@ -25,10 +25,10 @@ public class FoodItemRequestDto {
     @Min(0)
     private int price;
 
-    @NotNull
+    @NotNull(message = "Please provide the food item's availability.")
     private Boolean isAvailable;
 
-    @NotNull
+    @NotNull(message = "Please provide the food type.")
     private FoodType foodType;
 
     private String imageUrl;
@@ -37,12 +37,11 @@ public class FoodItemRequestDto {
     private int discountAmount;
 
     // 🔗 RELATION IDs ONLY
-    @NotBlank
+    @NotBlank(message = "Please provide the food category Id.")
     private String foodCategoryId;
 
-    @NotBlank
+    @NotBlank(message = "Please provide the food sub category Id.")
     private String foodSubCategoryId;
 
-    @NotNull
     private Set<String> restaurantIds;
 }

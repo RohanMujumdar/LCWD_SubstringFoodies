@@ -12,6 +12,8 @@ public interface AddressService {
 
     AddressDto getAddressById(String id);
 
+    AddressDto getAddressByUserId(String userId);
+
     List<AddressDto> getAllAddresses();
 
     Set<AddressDto> getAddressesByRestaurant(String restaurantId);
