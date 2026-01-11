@@ -26,13 +26,13 @@ public class UserDto {
     @NotEmpty(message = "Email cannot be empty")
     private String email;
 
-    @NotEmpty(message = "Password cannot be empty")
+    @NotBlank(message = "Password cannot be empty")
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
             message = "Password must contain at least one letter, one number, and one special character")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
-    @NotEmpty(message = "ConfirmPassword cannot be empty")
+    @NotBlank(message = "ConfirmPassword cannot be empty")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String confirmPassword;
 

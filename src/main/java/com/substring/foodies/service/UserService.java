@@ -31,6 +31,10 @@ public interface UserService {
 
     void changeUserRole(String userId, ChangeRoleDto dto);
 
+    void forgotPassword(String email);
+
+    void resetPassword(String email, String otp, String newPassword, String confirmPassword);
+
     void changePassword(String userId, ChangePasswordDto dto);
 
     void changeAvailability(String userId);

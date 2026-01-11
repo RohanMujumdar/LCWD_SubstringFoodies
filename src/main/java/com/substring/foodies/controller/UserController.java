@@ -1,9 +1,6 @@
 package com.substring.foodies.controller;
 
-import com.substring.foodies.dto.ChangePasswordDto;
-import com.substring.foodies.dto.ChangeRoleDto;
-import com.substring.foodies.dto.UserDto;
-import com.substring.foodies.dto.UserPutDto;
+import com.substring.foodies.dto.*;
 import com.substring.foodies.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -16,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -111,4 +109,33 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/change-credential/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request) {
+
+        userService.forgotPassword(request.getEmail());
+
+        // Always return same response (prevents email enumeration)
+        return ResponseEntity.ok(
+                Map.of("message", "If the email exists, an OTP has been sent.")
+        );
+    }
+
+    @PostMapping("/change-credential/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @RequestBody @Valid ResetPasswordRequest request) {
+
+        userService.resetPassword(
+                request.getEmail(),
+                request.getOtp(),
+                request.getNewPassword(),
+                request.getConfirmPassword()
+        );
+
+        return ResponseEntity.ok(
+                Map.of("message", "Password reset successful")
+        );
+    }
+
 }

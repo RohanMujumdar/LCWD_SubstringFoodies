@@ -46,6 +46,7 @@ public class SecurityConfig {
                                         "/swagger-resources/**"
                                 ).permitAll()
                                 .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/user/change-credential/**").permitAll()
                                 .requestMatchers(HttpMethod.DELETE, "/api/food/**", "/api/restaurant/**").hasAnyRole("ADMIN", "RESTAURANT_ADMIN")
                                 .requestMatchers(HttpMethod.PUT, "/api/food/**", "/api/restaurant/**").hasAnyRole("ADMIN", "RESTAURANT_ADMIN")
                                 .requestMatchers(HttpMethod.POST, "/api/food/**", "/api/restaurant/**").hasAnyRole("ADMIN", "RESTAURANT_ADMIN")

@@ -23,6 +23,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +41,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RestaurantRepository restaurantRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -344,6 +350,62 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
     }
+
+    @Override
+    @Transactional
+    public void forgotPassword(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFound("User not found with email = " + email));
+
+        String otp = String.valueOf(
+                new SecureRandom().nextInt(900000) + 100000
+        );
+
+        user.setResetOtp(otp);
+        user.setOtpExpiry(
+                LocalDateTime.now(ZoneId.of("Asia/Kolkata")).plusMinutes(10)
+        );
+
+        userRepository.save(user);
+
+        emailService.sendSimpleMail(
+                user.getEmail(),
+                "Password Reset OTP",
+                "Your OTP is: " + otp + "\nValid for 10 minutes."
+        );
+    }
+
+
+    @Override
+    @Transactional
+    public void resetPassword(String email, String otp, String newPassword, String confirmPassword) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFound("User not found with email"));
+
+        if (user.getResetOtp() == null || !user.getResetOtp().equals(otp)) {
+            throw new IllegalStateException("Invalid OTP");
+        }
+
+        if (user.getOtpExpiry().isBefore(LocalDateTime.now(ZoneId.of("Asia/Kolkata")))) {
+            throw new IllegalStateException("OTP expired");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BadRequestException("Password and Confirm Password must match.");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetOtp(null);
+        user.setOtpExpiry(null);
+
+        userRepository.save(user);
+    }
+
+
 
     @Override
     @Transactional

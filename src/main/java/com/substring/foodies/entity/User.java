@@ -3,6 +3,7 @@ import com.substring.foodies.dto.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,6 +45,12 @@ public class User extends BaseAuditableEntity{
     private boolean isEnabled=true;
 
     private String gender;
+
+    @Column(name = "reset_otp", nullable = true)
+    private String resetOtp;
+
+    @Column(name = "otp_expiry", nullable = true)
+    private LocalDateTime otpExpiry;
 
     @OneToOne(mappedBy = "creator", cascade = CascadeType.ALL, orphanRemoval = true)
     private Cart cart;
