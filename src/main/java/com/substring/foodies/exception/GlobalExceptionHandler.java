@@ -59,19 +59,8 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(NullPointerException.class)
-    public ResponseEntity<ErrorResponse> handleNullPointerException(NullPointerException ex)
-    {
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ErrorResponse.builder()
-                        .message("A null value was encountered while processing the request.")
-                        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .build());
-    }
-
     @ExceptionHandler(FileNotFoundException.class)
-    public ResponseEntity<String> handleFileNotFoundException(NullPointerException ex)
+    public ResponseEntity<String> handleFileNotFoundException(FileNotFoundException ex)
     {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)

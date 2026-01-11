@@ -12,6 +12,9 @@ import lombok.*;
 public class CartItems extends BaseAuditableEntity{
 
     @Id
+    @GeneratedValue
+    @org.hibernate.annotations.UuidGenerator
+    @Column(length = 36)
     private String id;
 
     @OneToOne

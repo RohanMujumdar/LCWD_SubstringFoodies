@@ -3,6 +3,7 @@ package com.substring.foodies.service;
 import com.substring.foodies.dto.AddItemToCartRequest;
 import com.substring.foodies.dto.CartDto;
 import com.substring.foodies.dto.CartItemsDto;
+import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.*;
 import com.substring.foodies.exception.BadItemRequestException;
 import com.substring.foodies.exception.FoodItemUnavailableException;
@@ -14,6 +15,8 @@ import com.substring.foodies.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Iterator;
@@ -38,8 +41,25 @@ public class CartServiceImpl implements CartService {
     private ModelMapper modelMapper;
 
     // ---------------- ADD ITEM ----------------
+
+    private User getLoggedInUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AccessDeniedException("Invalid session"));
+    }
+
     private Cart findAndValidate(String userId)
     {
+        User user = getLoggedInUser();
+        if(user.getRole() != Role.ROLE_ADMIN && !user.getId().equals(userId))
+        {
+            throw new AccessDeniedException("You can only access your own cart");
+        }
+
         Cart cart = cartRepository.findByCreatorId(userId)
                 .orElseThrow(() -> new ResourceNotFound("Cart not found for userId = " + userId));
 
@@ -58,6 +78,18 @@ public class CartServiceImpl implements CartService {
         String foodItemId = request.getFoodItemId();
         String restoId = request.getRestoId();
 
+        User getLoggedInUser = getLoggedInUser();
+
+        if(getLoggedInUser.getRole() != Role.ROLE_ADMIN && !getLoggedInUser.getId().equals(userId))
+        {
+            throw new AccessDeniedException("You can only create cart for yourself.");
+        }
+
+        User user = getLoggedInUser.getRole() == Role.ROLE_ADMIN ?
+                            userRepository.findById(userId).orElseThrow(()->new ResourceNotFound("User not found with id = "+userId))
+                            : getLoggedInUser;
+
+
         Restaurant restaurant = restaurantRepository.findById(restoId)
                 .orElseThrow(() -> new ResourceNotFound("Restaurant not found with id = " + restoId));
 
@@ -65,9 +97,6 @@ public class CartServiceImpl implements CartService {
         if (!restaurant.isOpen()) {
             throw new BadItemRequestException("Restaurant is currently closed");
         }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFound("User not found with id = " + userId));
 
         FoodItems foodItem = foodItemRepository.findById(foodItemId)
                 .orElseThrow(() -> new ResourceNotFound("Food item not found with id = " + foodItemId));
@@ -156,10 +185,12 @@ public class CartServiceImpl implements CartService {
         while (iterator.hasNext()) {
             CartItems item = iterator.next();
             if (item.getId().equals(cartItemId)) {
-                item.setQuantity(item.getQuantity() - 1);
-                if (item.getQuantity() == 0) {
+                if (item.getQuantity() <= 1) {
                     iterator.remove();
+                } else {
+                    item.setQuantity(item.getQuantity() - 1);
                 }
+
                 cartRepository.save(cart);
                 return modelMapper.map(cart, CartDto.class);
             }

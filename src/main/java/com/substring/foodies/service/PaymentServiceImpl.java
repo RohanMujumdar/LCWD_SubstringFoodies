@@ -5,13 +5,19 @@ import com.razorpay.Utils;
 import com.substring.foodies.dto.PaymentVerifyObject;
 import com.substring.foodies.dto.enums.OrderStatus;
 import com.substring.foodies.dto.enums.PaymentStatus;
+import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.Order;
+import com.substring.foodies.entity.User;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.OrderRepository;
+import com.substring.foodies.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -28,6 +34,33 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${razorpay.key_secret}")
     private String razorpayKeySecret;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    private User getLoggedInUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AccessDeniedException("Invalid session"));
+    }
+
+    private void validateOrder(Order order) {
+
+        User loggedInUser = getLoggedInUser();
+
+        boolean isOwner = loggedInUser.getId().equals(order.getUser().getId());
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new AccessDeniedException(
+                    "You are not authorized to access this order"
+            );
+        }
+    }
+
     // ---------------- CREATE PAYMENT ----------------
     @Override
     public Map<String, Object> createPayment(String orderId) {
@@ -35,6 +68,8 @@ public class PaymentServiceImpl implements PaymentService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() ->
                         new ResourceNotFound("Order not found with id = " + orderId));
+
+        validateOrder(order);
 
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
             throw new IllegalStateException("Payment already completed");
@@ -83,6 +118,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() ->
                         new ResourceNotFound("Order not found with id = " + orderId));
 
+        validateOrder(order);
         // Idempotent check
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
             return;

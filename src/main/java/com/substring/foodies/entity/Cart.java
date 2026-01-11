@@ -15,6 +15,9 @@ import java.util.List;
 public class Cart extends BaseAuditableEntity{
 
     @Id
+    @GeneratedValue
+    @org.hibernate.annotations.UuidGenerator
+    @Column(length = 36)
     private String id;
 
     @ManyToOne

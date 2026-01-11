@@ -1,8 +1,11 @@
 package com.substring.foodies.service;
 
 import com.substring.foodies.dto.AddressDto;
+import com.substring.foodies.dto.enums.AddressType;
+import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.Address;
 import com.substring.foodies.entity.Restaurant;
+import com.substring.foodies.entity.User;
 import com.substring.foodies.exception.ResourceNotFound;
 import com.substring.foodies.repository.AddressRepository;
 import com.substring.foodies.repository.RestaurantRepository;
@@ -10,6 +13,8 @@ import com.substring.foodies.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,6 +36,31 @@ public class AddressServiceImpl implements AddressService {
     @Autowired
     private ModelMapper modelMapper;
 
+    private User getLoggedInUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new AccessDeniedException("Invalid session"));
+    }
+
+    private void validateAddressAccess(String userId)
+    {
+        userRepository.findById(userId).orElseThrow(()->new ResourceNotFound("User not found with id = "+userId));
+
+        User loggedInUser = getLoggedInUser();
+
+        boolean isOwner = loggedInUser.getId().equals(userId);
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+
+        if(!isOwner && !isAdmin)
+        {
+            throw new AccessDeniedException("You are not authorized to perform this action.");
+        }
+    }
+
     @Override
     public AddressDto createAddress(AddressDto addressDto) {
 
@@ -39,7 +69,6 @@ public class AddressServiceImpl implements AddressService {
                     "Address already exists with id = " + addressDto.getId()
             );
         }
-
 
         Address address = modelMapper.map(addressDto, Address.class);
         Address saved = addressRepository.save(address);
@@ -57,10 +86,13 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressDto getAddressByUserId(String userId) {
-        userRepository.findById(userId).
-                orElseThrow(()->new ResourceNotFound("User not found with id = "+userId));
 
-        Address address = addressRepository.findByUserId(userId);
+        validateAddressAccess(userId);
+
+        Address address = addressRepository.findByUserId(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Address not found for userId = " + userId));
+
         return modelMapper.map(address, AddressDto.class);
     }
 
@@ -91,6 +123,15 @@ public class AddressServiceImpl implements AddressService {
                 .orElseThrow(() ->
                         new ResourceNotFound("Address not found with id = " + id));
 
+        User loggedInUser = getLoggedInUser();
+
+        if(loggedInUser.getRole() != Role.ROLE_ADMIN && existingAddress.getAddressType() == AddressType.RESTAURANT)
+        {
+            throw new AccessDeniedException("Only ADMIN can modify restaurant address");
+        }
+
+        validateAddressAccess(existingAddress.getUser().getId());
+
         existingAddress.setAddressLine(addressDto.getAddressLine());
         existingAddress.setCity(addressDto.getCity());
         existingAddress.setState(addressDto.getState());
@@ -107,6 +148,16 @@ public class AddressServiceImpl implements AddressService {
         Address existingAddress = addressRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFound("Address not found with id = " + id));
+
+        User loggedInUser = getLoggedInUser();
+
+        if(loggedInUser.getRole() != Role.ROLE_ADMIN && existingAddress.getAddressType() == AddressType.RESTAURANT)
+        {
+            throw new AccessDeniedException("Only ADMIN can modify restaurant address");
+        }
+
+        validateAddressAccess(existingAddress.getUser().getId());
+
 
         if (patchDto.getAddressLine() != null)
             existingAddress.setAddressLine(patchDto.getAddressLine());

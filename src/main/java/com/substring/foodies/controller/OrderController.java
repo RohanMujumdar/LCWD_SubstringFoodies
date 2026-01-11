@@ -4,6 +4,7 @@ import com.substring.foodies.dto.OrderDto;
 import com.substring.foodies.dto.OrderPlaceRequest;
 import com.substring.foodies.dto.enums.OrderStatus;
 import com.substring.foodies.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,8 +27,7 @@ public class OrderController {
     private OrderService orderService;
 
     @PostMapping
-    private ResponseEntity<OrderDto> placeOrder(@RequestBody OrderPlaceRequest orderPlaceRequest) {
-        System.out.println("orderPlaceRequest: " + orderPlaceRequest);
+    public ResponseEntity<OrderDto> placeOrder(@RequestBody @Valid OrderPlaceRequest orderPlaceRequest) {
         OrderDto orderDto = orderService.placeOrderRequest(orderPlaceRequest);
         return ResponseEntity.ok(orderDto);
     }
@@ -52,7 +52,7 @@ public class OrderController {
     }
 
     @GetMapping("/delivery/{deliveryBoyId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DELIVERY_BOY")
+    @PreAuthorize("hasAnyRole('ADMIN','DELIVERY_BOY')")
     public ResponseEntity<List<OrderDto>> getOrdersByDeliveryBoy(@PathVariable String deliveryBoyId) {
         List<OrderDto> orders = orderService.getOrderByDeliveryBoy(deliveryBoyId);
         return ResponseEntity.ok(orders);

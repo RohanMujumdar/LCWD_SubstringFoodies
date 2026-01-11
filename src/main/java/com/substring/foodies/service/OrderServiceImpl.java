@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
 public class OrderServiceImpl implements OrderService {
 
     @Autowired
@@ -87,7 +86,21 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderDto placeOrderRequest(OrderPlaceRequest orderPlaceRequest) {
 
-        User user = getLoggedInUser();
+        User loggedInUser = getLoggedInUser();
+        String userId = orderPlaceRequest.getUserId();
+
+        boolean isOwner = loggedInUser.getId().equals(userId);
+        boolean isAdmin = loggedInUser.getRole() == Role.ROLE_ADMIN;
+
+        if(!isOwner && !isAdmin)
+        {
+            throw new AccessDeniedException("You are not authorized to perform this action.");
+        }
+
+        User user = loggedInUser.getRole() == Role.ROLE_ADMIN ?
+                userRepository.findById(userId).orElseThrow(()->new ResourceNotFound("User not found with id = "+userId))
+                : loggedInUser;
+
         Cart cart = cartRepository.findByCreator(user).orElseThrow(() -> new ResourceNotFound(String.format("Cart Not Found for userId = %s", user.getId())));
 
         Restaurant restaurant = restaurantRepository.findById(orderPlaceRequest.getRestaurantId())
