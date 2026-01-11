@@ -11,7 +11,8 @@ import lombok.*;
 public class CartItemsDto {
 
     private String id;
-    private Long foodItemsId;
+    private String foodItemsId;
+    private String foodItemsName;
     private int quantity;
     private String cartId;
 }

@@ -3,6 +3,7 @@ package com.substring.foodies.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -10,7 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Data
 @Builder
 public class Cart extends BaseAuditableEntity{
 
@@ -28,6 +28,7 @@ public class Cart extends BaseAuditableEntity{
     private User creator;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItems> cartItems;
+    @Builder.Default
+    private List<CartItems> cartItems = new ArrayList<>();
 
 }

@@ -16,9 +16,6 @@ public class OrderPlaceRequest {
     @NotBlank(message = "Please provide the user Id.")
     private String userId;
 
-    @NotBlank(message = "Please provide the restaurant Id.")
-    private String restaurantId;
-
     @NotNull(message = "Please provide the Address.")
     @Valid
     private AddressDto address;

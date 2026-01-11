@@ -19,15 +19,16 @@ import java.util.List;
 public class OrderDto {
 
     private String id;
-    private UserDto user;
-    private RestaurantDto restaurant;
+    private String userId;
+    private String restaurantId;
     private AddressDto address;
     private int totalAmount;
     private OrderStatus status = OrderStatus.PLACED;
     private LocalDateTime orderedAt;
     private LocalDateTime deliveryTime;
-    private UserDto deliveryBoy;
-    private List<OrderItemDto> orderItemDtoList = new ArrayList<>();
+    private String deliveryBoyId;
+    private String deliveryBoyName;
+    private List<OrderItemDto> orderItemList = new ArrayList<>();
     private PaymentStatus paymentStatus;
     private PaymentMode paymentMode;
     private String paymentId;

@@ -36,8 +36,8 @@ logging:
         security: DEBUG
 
 razorpay:
-  key_id: rzp_test_gSTSCaNRmkjT5L
-  key_secret: 3IVGEg5yBOaR67BlrPVa5nvj
+  key_id: rzp_test_S2bLEGfYT1Naqo9
+  key_secret: 6zkwpiURzetLG1H53sL5lPsO
 
 jwt:
   secret: sdfasdvsdagbfkjadfkjsgksdfgjkgjkg

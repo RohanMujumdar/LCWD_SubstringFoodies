@@ -4,6 +4,7 @@ import com.substring.foodies.dto.AddItemToCartRequest;
 import com.substring.foodies.dto.CartDto;
 import com.substring.foodies.dto.CartItemsDto;
 import com.substring.foodies.service.CartService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class CartController {
     private CartService cartService;
 
     @PostMapping("/add")
-    public ResponseEntity<CartDto> addItemToCart(@RequestBody AddItemToCartRequest request) {
+    public ResponseEntity<CartDto> addItemToCart(@RequestBody @Valid AddItemToCartRequest request) {
         CartDto cartDto = cartService.addItemToCart(request);
         return new ResponseEntity<>(cartDto, HttpStatus.OK);
     }

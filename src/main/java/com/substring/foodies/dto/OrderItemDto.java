@@ -11,7 +11,8 @@ import lombok.*;
 public class OrderItemDto {
 
     private String id;
-    private OrderDto order;
-    private FoodItemsMenuDto foodItems;
+    private String orderId;
+    private String foodItemsId;
+    private String foodItemsName;
     private int quantity;
 }

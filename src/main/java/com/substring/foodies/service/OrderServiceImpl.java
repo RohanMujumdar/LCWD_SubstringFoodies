@@ -9,12 +9,8 @@ import com.substring.foodies.dto.enums.Role;
 import com.substring.foodies.entity.*;
 
 import com.substring.foodies.exception.ResourceNotFound;
-import com.substring.foodies.repository.CartRepository;
-import com.substring.foodies.repository.OrderRepository;
-import com.substring.foodies.repository.RestaurantRepository;
-import com.substring.foodies.repository.UserRepository;
+import com.substring.foodies.repository.*;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,6 +30,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private AddressRepository addressRepository;
 
     @Autowired
     private CartService cartService;
@@ -94,17 +94,26 @@ public class OrderServiceImpl implements OrderService {
 
         if(!isOwner && !isAdmin)
         {
-            throw new AccessDeniedException("You are not authorized to perform this action.");
+            throw new AccessDeniedException(
+                    "Access denied. Only the cart owner or an administrator can place this order."
+            );
         }
 
         User user = loggedInUser.getRole() == Role.ROLE_ADMIN ?
                 userRepository.findById(userId).orElseThrow(()->new ResourceNotFound("User not found with id = "+userId))
                 : loggedInUser;
 
+        if(!isOwner && isAdmin && user.getRole() == Role.ROLE_ADMIN)
+        {
+            throw new AccessDeniedException(
+                    "Access denied. You cannot place order for another."
+            );
+        }
+
         Cart cart = cartRepository.findByCreator(user).orElseThrow(() -> new ResourceNotFound(String.format("Cart Not Found for userId = %s", user.getId())));
 
-        Restaurant restaurant = restaurantRepository.findById(orderPlaceRequest.getRestaurantId())
-                .orElseThrow(() -> new ResourceNotFound(String.format("Restaurant not found with id = %s", orderPlaceRequest.getRestaurantId())));
+        Restaurant restaurant = restaurantRepository.findById(cart.getRestaurant().getId())
+                .orElseThrow(() -> new ResourceNotFound(String.format("Restaurant not found with id = %s", cart.getRestaurant().getId())));
 
         List<CartItems> cartItems = cart.getCartItems();
 
@@ -117,13 +126,16 @@ public class OrderServiceImpl implements OrderService {
         order.setUser(user);
         order.setRestaurant(restaurant);
 
-        Address address = mapper.map(orderPlaceRequest.getAddress(), Address.class);
-        if (address.getId() == null)
-            address.setId(null);
+        String addressId = orderPlaceRequest.getAddress().getId();
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() ->
+                        new ResourceNotFound("Address not found with id = " + addressId)
+                );
 
         order.setAddress(address);
         order.setStatus(OrderStatus.PLACED);
-        order.setOrderedAt(LocalDateTime.now());
+        order.setOrderedAt(LocalDateTime.now(ZoneId.of("Asia/Kolkata")));
         order.setPaymentMode(orderPlaceRequest.getPaymentMode());
 
         if(orderPlaceRequest.getPaymentMode().equals(PaymentMode.CASH_ON_DELIVERY))
@@ -185,7 +197,11 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderDto> getOrderByUserId(String userId) {
 
         User user = getLoggedInUser();
-        if (!user.getId().equals(userId) && user.getRole() != Role.ROLE_ADMIN) {
+
+        boolean isOwner = user.getId().equals(userId);
+        boolean isAdmin = user.getRole() == Role.ROLE_ADMIN;
+
+        if (!isOwner && !isAdmin) {
             throw new AccessDeniedException("You are not authorized to perform this action.");
         }
 
@@ -259,11 +275,22 @@ public class OrderServiceImpl implements OrderService {
         // ✅ Cancel order
         order.setStatus(OrderStatus.CANCELLED);
 
-        // 💰 Handle payment state (simple logic for now)
+        // ⏱ Refund rule
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
-            order.setPaymentStatus(PaymentStatus.REFUNDED_INITIATED);
-            // Later → integrate Razorpay refund
+
+            boolean isAfterRefundWindow =
+                    order.getOrderedAt()
+                            .isBefore(LocalDateTime.now().minusMinutes(10));
+
+            if (isAfterRefundWindow) {
+                // ❌ No refund
+                order.setPaymentStatus(PaymentStatus.NON_REFUNDABLE);
+            } else {
+                // ✅ Refund allowed
+                order.setPaymentStatus(PaymentStatus.REFUNDED_INITIATED);
+            }
         }
+
 
         Order savedOrder = orderRepository.save(order);
 
@@ -272,6 +299,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
+    @Transactional
     public OrderDto updateOrderStatus(String orderId, OrderStatus orderStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFound("Order not found with id: " + orderId));

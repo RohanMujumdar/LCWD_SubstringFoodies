@@ -30,7 +30,8 @@ public class OrderStatusScheduler {
                 List.of(
                         OrderStatus.PLACED,
                         OrderStatus.ACCEPTED,
-                        OrderStatus.PREPARING
+                        OrderStatus.PREPARING,
+                        OrderStatus.PICKED_UP
                 )
         );
 
@@ -47,6 +48,9 @@ public class OrderStatusScheduler {
             }
             else if (order.getStatus() == OrderStatus.PREPARING && minutes >= 20) {
                 order.setStatus(OrderStatus.PICKED_UP);
+            }
+            else if (order.getStatus() == OrderStatus.PICKED_UP && minutes >= 30) {
+                order.setStatus(OrderStatus.DELIVERED);
             }
         }
     }

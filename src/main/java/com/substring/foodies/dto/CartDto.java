@@ -1,4 +1,5 @@
 package com.substring.foodies.dto;
+import com.substring.foodies.entity.User;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -8,13 +9,12 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Builder
 public class CartDto {
 
     private String id;
     private LocalDateTime createdAt;
-    private String creator;
+    private String creatorId;
     private List<CartItemsDto> cartItems;
 
 }

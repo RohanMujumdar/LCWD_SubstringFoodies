@@ -119,10 +119,6 @@ public class PaymentServiceImpl implements PaymentService {
                         new ResourceNotFound("Order not found with id = " + orderId));
 
         validateOrder(order);
-        // Idempotent check
-        if (order.getPaymentStatus() == PaymentStatus.PAID) {
-            return;
-        }
 
         // 2️⃣ 🔥 IMPORTANT GUARD
         if (order.getRazorpayId() == null) {
@@ -150,7 +146,10 @@ public class PaymentServiceImpl implements PaymentService {
             orderRepository.save(order);
 
         } catch (Exception e) {
-            throw new RuntimeException("Payment verification error", e);
+            order.setPaymentStatus(PaymentStatus.FAILED);
+            order.setPaymentId(dto.getRazorpayPaymentId());
+            orderRepository.save(order);
+            throw new IllegalStateException("Payment verification failed");
         }
     }
 }
