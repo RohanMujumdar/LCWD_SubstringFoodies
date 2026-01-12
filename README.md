@@ -11,6 +11,7 @@ This is a **backend-only project** with complete API documentation via Swagger a
 ### 🔐 Authentication & Authorization
 
 * JWT-based stateless authentication
+* Custom JWT authentication filter for token validation and request authorization
 * Role-based access control (RBAC)
 
   * `ADMIN`
@@ -48,6 +49,12 @@ This is a **backend-only project** with complete API documentation via Swagger a
 * Centralized exception handling using `@RestControllerAdvice`
 * Consistent and structured error responses
 * Covers validation, security, and business exceptions
+
+### 🖼 File Uploads
+
+* Image upload support for restaurant banners and food items
+* Multipart file handling with validation
+* File storage paths configurable via environment variables
 
 ### 📄 API Documentation
 
@@ -92,9 +99,9 @@ Controller → Service → Repository → Database
 * Controllers handle HTTP requests and responses
 * Services contain business logic
 * Repositories handle data access
-* Security is enforced via JWT filters and role-based rules
+* Security is enforced via custom JWT filters and role-based rules
 
-All components are containerized for consistency and portability.
+All components are containerized for consistency and portability and are designed to be **cloud-ready via environment-based configuration**.
 
 ---
 
@@ -146,7 +153,7 @@ The application is fully environment-driven. Key variables include:
 * Payment gateway keys
 * Active Spring profile
 
-This allows seamless switching between **local** and **Docker**.
+This allows seamless switching between **local**, **Docker**, and **cloud** environments without code changes.
 
 ---
 
@@ -172,6 +179,7 @@ For interviews:
 ---
 
 ## 👨‍💻 Author
+
 **Rohan Mujumdar**
 
 This project was built to demonstrate practical backend engineering skills, clean design, and production-aligned development practices.
