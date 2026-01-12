@@ -47,8 +47,8 @@ spring:
 
 logging:
   level:
-    org.flywaydb: DEBUG
-    org.springframework.security: DEBUG
+    root: INFO
+
 
 
 razorpay:
@@ -68,3 +68,9 @@ food:
 
 server:
   port: 8062
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

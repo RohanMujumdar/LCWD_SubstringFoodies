@@ -11,5 +11,7 @@ VOLUME /tmp
 # into app.jar file.
 COPY target/lcwd_substringFoodies-0.0.1-SNAPSHOT.jar app.jar
 
+EXPOSE 8062
+
 # To run the app
 ENTRYPOINT ["java", "-jar", "/app.jar"]
