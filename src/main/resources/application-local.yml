@@ -49,7 +49,7 @@ logging:
 
 razorpay:
   key_id: rzp_test_S2bLEGfYT1Naqo9
-  key_secret: 6zkwpiURzetLG1H53sL5lPsO
+  key_secret: your_key_secret
 
 jwt:
   secret: sdfasdvsdagbfkjadfkjsgksdfgjkgjkg
