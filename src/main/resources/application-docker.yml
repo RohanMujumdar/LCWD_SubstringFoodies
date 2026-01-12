@@ -40,10 +40,6 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-#  security:
-#    user:
-#      name: ${SECURITY_USERNAME}
-#      password: ${SECURITY_PASSWORD}
 
 logging:
   level:
@@ -60,11 +56,11 @@ jwt:
 
 restaurant:
   file:
-    path: /app/uploads/restaurant_banner/
+    path: ${RESTAURANT_FILE_PATH}
 
 food:
   file:
-    path: /app/uploads/food_item_banner/
+    path: ${FOOD_FILE_PATH}
 
 server:
   port: 8062
