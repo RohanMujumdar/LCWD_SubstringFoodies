@@ -19,8 +19,8 @@ spring:
 
   datasource:
     url: jdbc:mysql://localhost:3306/lcwd_food_delivery_app
-    username: my_username
-    password: my_password
+    username: root
+    password: Restinpeace11.
 
   jpa:
     show-sql: true
@@ -52,7 +52,7 @@ razorpay:
   key_secret: your_key_secret
 
 jwt:
-  secret: my_jwt_secret_key
+  secret: sdfasdvsdagbfkjadfkjsgksdfgjkgjkg
 
 restaurant:
   file:
