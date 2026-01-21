@@ -128,10 +128,33 @@ This starts:
 
 ## 🌐 Local Access URLs
 
-* **Backend API**: [http://localhost:8063](http://localhost:8063)
-* **Swagger UI**: [http://localhost:8063/swagger-ui/index.html](http://localhost:8063/swagger-ui/index.html)
-* **Health Check**: [http://localhost:8063/actuator/health](http://localhost:8063/actuator/health)
-* **Adminer**: [http://localhost:8081](http://localhost:8081)
+> ⚠️ **Authentication Required**  
+> All secured APIs require authentication. Accessing protected endpoints directly (e.g., via browser) will return `401 Unauthorized`.
+
+**Local Services:**
+
+* **Backend API**: http://localhost:8063  
+  _(Secured – requires JWT access token)_
+* **Swagger UI**: http://localhost:8063/swagger-ui/index.html  
+* **Health Check**: http://localhost:8063/actuator/health  
+* **Adminer**: http://localhost:8081  
+
+---
+
+## 🔐 Authentication Flow (How to Access APIs)
+
+1. Use **Postman** (or any API client) to call the login endpoint.
+2. On successful authentication, the system returns:
+   * **Access Token (JWT)**
+   * **Refresh Token**
+3. Include the access token in subsequent requests:
+
+Authorization: Bearer <ACCESS_TOKEN>
+
+4. Endpoint access is **role-based** and depends on the authenticated user role  
+(e.g., `ADMIN`, `RESTAURANT_ADMIN`, `USER`, `DELIVERY_BOY`).
+
+Unauthorized or insufficient-role access will return appropriate HTTP status codes (`401 / 403`).
 
 ---
 
