@@ -154,7 +154,12 @@ Authorization: Bearer <ACCESS_TOKEN>
 4. Endpoint access is **role-based** and depends on the authenticated user role  
 (e.g., `ADMIN`, `RESTAURANT_ADMIN`, `USER`, `DELIVERY_BOY`).
 
+> 📘 **API Documentation**  
+> All available endpoints, request/response schemas, and authorization requirements are documented in **Swagger UI**.  
+> Use Swagger to explore endpoints and test APIs interactively after providing a valid JWT token.
+
 Unauthorized or insufficient-role access will return appropriate HTTP status codes (`401 / 403`).
+
 
 ---
 
